@@ -8,28 +8,18 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("site-theme");
-      if (stored) {
-        setTheme(stored);
-        document.documentElement.classList.toggle("theme-dark", stored === "dark");
-      } else {
-        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const initial = prefersDark ? "dark" : "light";
-        setTheme(initial);
-        document.documentElement.classList.toggle("theme-dark", initial === "dark");
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    const stored = localStorage.getItem("site-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initial = stored || (prefersDark ? "dark" : "light");
+    
+    setTheme(initial);
+    document.documentElement.classList.toggle("theme-dark", initial === "dark");
   }, []);
 
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    try {
-      localStorage.setItem("site-theme", next);
-    } catch (e) {}
+    localStorage.setItem("site-theme", next);
     document.documentElement.classList.toggle("theme-dark", next === "dark");
   };
 
@@ -40,8 +30,22 @@ export default function ThemeToggle() {
       className="flex items-center gap-2" 
       style={{background: "transparent", color: "var(--text)" }}
     >
-      <span className="hidden sm:flex">Theme :</span>
-      {theme === "dark" ? <FaMoon /> : theme === "light" ? <IoMdSunny /> : <span>...</span>}
+      <span className="hidden sm:flex font-medium">Theme:</span>
+      
+      {/* Icon Container with transition */}
+      <div className="relative w-5 h-5 flex items-center justify-center overflow-hidden">
+        <div className={`transform transition-all duration-500 ease-spring ${
+          theme === "dark" ? "translate-y-0 opacity-100 rotate-0" : "translate-y-8 opacity-0 rotate-45"
+        }`}>
+          <FaMoon size={18} />
+        </div>
+        <div className={`absolute transform transition-all duration-500 ease-spring ${
+          theme === "light" ? "translate-y-0 opacity-100 rotate-0" : "-translate-y-8 opacity-0 -rotate-45"
+        }`}>
+          <IoMdSunny size={20} className="text-yellow-500" />
+        </div>
+        {theme === null && <span className="animate-pulse">...</span>}
+      </div>
     </button>
   );
 }

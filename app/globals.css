@@ -59,8 +59,29 @@ video {
   display: block;
 }
 
+html, 
+body, 
+div, 
+section, 
+nav, 
+header, 
+footer, 
+button, 
+input, 
+textarea {
+  transition: 
+    background-color 0.3s ease-in-out, 
+    color 0.3s ease-in-out, 
+    border-color 0.3s ease-in-out,
+    box-shadow 0.3s ease-in-out;
+}
+
 * {
-  transition:
-    background-color 120ms linear,
-    color 120ms linear;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.ease-spring {
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
