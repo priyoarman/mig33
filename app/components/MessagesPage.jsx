@@ -6,6 +6,7 @@ import { BsSearch } from "react-icons/bs";
 import { FaArrowLeft, FaPaperPlane } from "react-icons/fa6";
 import MiniProfile from "./MiniProfile";
 import { useRealtimeNotifications } from "./RealtimeProvider";
+import Link from "next/link";
 
 function UserAvatar({ user }) {
   return user?.profileImage ? (
@@ -210,7 +211,14 @@ const MessagesPage = () => {
             <FaArrowLeft />
           </button>
         )}
-        <h1 className="text-xl font-bold">Messages</h1>
+        <div className="flex items-center gap-3 py-1">
+          <Link href="/" className="hover-accent rounded-full px-2 text-2xl">
+            ←
+          </Link>
+          <div className="flex-1">
+            <p className="text-xl font-bold">Messages</p>
+          </div>
+        </div>
       </header>
       {socketError && (
         <p className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">

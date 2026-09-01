@@ -16,12 +16,17 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const currentUserObjectId = new mongoose.Types.ObjectId(currentUserId);
+
     await connectMongoDB();
     if (!otherUserId) {
       const latestMessages = await Message.aggregate([
         {
           $match: {
-            $or: [{ senderId: currentUserId }, { recipientId: currentUserId }],
+            $or: [
+              { senderId: currentUserObjectId },
+              { recipientId: currentUserObjectId },
+            ],
           },
         },
         { $sort: { createdAt: -1 } },
@@ -75,10 +80,11 @@ export async function GET(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const otherUserObjectId = new mongoose.Types.ObjectId(otherUserId);
     const messages = await Message.find({
       $or: [
-        { senderId: currentUserId, recipientId: otherUserId },
-        { senderId: otherUserId, recipientId: currentUserId },
+        { senderId: currentUserObjectId, recipientId: otherUserObjectId },
+        { senderId: otherUserObjectId, recipientId: currentUserObjectId },
       ],
     })
       .sort({ createdAt: 1 })
