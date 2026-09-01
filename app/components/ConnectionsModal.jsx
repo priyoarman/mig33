@@ -6,6 +6,11 @@ import Link from "next/link";
 
 const ConnectionsModal = ({ type, users, onClose }) => {
   useEffect(() => {
+    document.body.classList.add("connections-modal-open");
+    return () => document.body.classList.remove("connections-modal-open");
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") onClose();
     };
@@ -18,7 +23,7 @@ const ConnectionsModal = ({ type, users, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();

@@ -98,17 +98,31 @@ body,
   scrollbar-width: none;
 }
 
-.comments-modal-open .reddit-right-column {
-  background: rgba(15, 23, 42, 0.12);
-  filter: saturate(0.72) brightness(0.9);
+.comments-modal-open .reddit-main-column,
+.connections-modal-open .reddit-main-column {
+  z-index: 60;
 }
 
-.theme-dark .comments-modal-open .reddit-right-column {
+.comments-modal-open .reddit-left-column,
+.comments-modal-open .reddit-right-column,
+.connections-modal-open .reddit-left-column,
+.connections-modal-open .reddit-right-column {
+  background: rgba(15, 23, 42, 0.12);
+  filter: saturate(0.72) brightness(0.9) blur(1px);
+}
+
+.theme-dark .comments-modal-open .reddit-left-column,
+.theme-dark .comments-modal-open .reddit-right-column,
+.theme-dark .connections-modal-open .reddit-left-column,
+.theme-dark .connections-modal-open .reddit-right-column {
   background: rgba(15, 23, 42, 0.38);
 }
 
-.comments-modal-open .reddit-right-column > * {
-  opacity: 0.92;
+.comments-modal-open .reddit-left-column > *,
+.comments-modal-open .reddit-right-column > *,
+.connections-modal-open .reddit-left-column > *,
+.connections-modal-open .reddit-right-column > * {
+  opacity: 0.84;
 }
 
 .reddit-right-column::-webkit-scrollbar {
