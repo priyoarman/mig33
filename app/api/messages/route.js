@@ -45,7 +45,9 @@ export async function GET(request) {
       })
         .select("name username profileImage")
         .lean();
-      const usersById = new Map(users.map((user) => [user._id.toString(), user]));
+      const usersById = new Map(
+        users.map((user) => [user._id.toString(), user]),
+      );
       const conversations = latestMessages
         .map(({ _id, message }) => {
           const userId = _id.toString();

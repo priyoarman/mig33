@@ -39,12 +39,13 @@ export function RealtimeProvider({ children }) {
     const canUseLocalSocket =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
-    const socket = socketUrl || canUseLocalSocket
-      ? io(socketUrl || window.location.origin, {
-          withCredentials: true,
-          auth: { userId: session.user.id.toString() },
-        })
-      : null;
+    const socket =
+      socketUrl || canUseLocalSocket
+        ? io(socketUrl || window.location.origin, {
+            withCredentials: true,
+            auth: { userId: session.user.id.toString() },
+          })
+        : null;
     setSocket(socket);
     const loadNotifications = () => {
       fetch("/api/notifications")
@@ -53,8 +54,9 @@ export function RealtimeProvider({ children }) {
           if (!data) return;
           setNotifications((current) => {
             const merged = [...(data.notifications || []), ...current];
-            return [...new Map(merged.map((item) => [item.id, item])).values()]
-              .slice(0, 50);
+            return [
+              ...new Map(merged.map((item) => [item.id, item])).values(),
+            ].slice(0, 50);
           });
           setUnreadCount(data.unreadCount || 0);
         })
