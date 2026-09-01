@@ -36,7 +36,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="sticky container flex h-screen w-full flex-col place-items-center items-center justify-center pb-32 sm:w-screen sm:pb-0 lg:w-2/4">
+    <div className="sticky container flex h-screen w-full flex-col place-items-center items-center justify-center pb-32 border-r-1 border-default sm:w-screen sm:pb-0 lg:w-2/4">
       <div className="place-items-center px-5">
         <h1 className="flex flex-row items-center justify-center text-2xl font-semibold text-gray-700">
           Welcome Back!

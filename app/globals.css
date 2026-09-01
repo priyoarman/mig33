@@ -7,6 +7,10 @@
   --text: #000000;
   --border: rgba(0, 0, 0, 0.08);
   --accent: #06b6d4;
+  --reddit-shell-max: 1280px;
+  --reddit-left-width: 272px;
+  --reddit-center-width: 740px;
+  --reddit-right-width: 300px;
 }
 
 .theme-dark {
@@ -25,32 +29,98 @@ body,
   color: var(--text) !important;
 }
 
-.bg-app { background-color: var(--bg) !important; }
-.bg-panel { background-color: var(--panel) !important; }
-.bg-surface { background-color: rgba(255,255,255,0.02) !important; }
+.reddit-shell {
+  width: 100%;
+  max-width: var(--reddit-shell-max);
+  margin-inline: auto;
+}
+
+.reddit-layout {
+  display: flex;
+  width: 100%;
+}
+
+.reddit-left-column,
+.reddit-right-column,
+.reddit-main-column {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .reddit-layout {
+    display: grid;
+    grid-template-columns: var(--reddit-left-width) minmax(
+        0,
+        var(--reddit-center-width)
+      ) var(--reddit-right-width);
+    align-items: start;
+  }
+
+  .reddit-left-column {
+    width: var(--reddit-left-width);
+  }
+
+  .reddit-main-column {
+    width: 100%;
+    max-width: var(--reddit-center-width);
+    justify-self: center;
+  }
+
+  .reddit-right-column {
+    width: var(--reddit-right-width);
+  }
+}
+
+.bg-app {
+  background-color: var(--bg) !important;
+}
+.bg-panel {
+  background-color: var(--panel) !important;
+}
+.bg-surface {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
 
 /* Hover/interactive states - components should opt-in with these classes */
-.hover-panel:hover { background-color: var(--panel-hover, rgba(255,255,255,0.03)) !important; }
-.hover-accent:hover { background-color: var(--accent-hover, rgba(6,182,212,0.15)) !important; }
+.hover-panel:hover {
+  background-color: var(--panel-hover, rgba(255, 255, 255, 0.03)) !important;
+}
+.hover-accent:hover {
+  background-color: var(--accent-hover, rgba(6, 182, 212, 0.15)) !important;
+}
 
 /* Text utilities - use these instead of overriding Tailwind base classes */
-.text-primary { color: var(--text) !important; }
-.text-muted { color: var(--muted) !important; }
-.text-accent { color: var(--accent) !important; }
+.text-primary {
+  color: var(--text) !important;
+}
+.text-muted {
+  color: var(--muted) !important;
+}
+.text-accent {
+  color: var(--accent) !important;
+}
 
 /* Border utility */
-.border-default { border-color: var(--border) !important; }
+.border-default {
+  border-color: var(--border) !important;
+}
 
 /* Inputs */
-input, textarea, select {
-  background-color: rgba(255,255,255,0.02) !important;
+input,
+textarea,
+select {
+  background-color: rgba(255, 255, 255, 0.02) !important;
   color: var(--text) !important;
   border-color: var(--border) !important;
 }
 
 /* Accent */
-.bg-accent { background-color: var(--accent) !important; }
-.hover\:bg-accent-hover:hover { background-color: var(--accent-hover, #0891b2) !important; }
+.bg-accent {
+  background-color: var(--accent) !important;
+}
+.hover\:bg-accent-hover:hover {
+  background-color: var(--accent-hover, #0891b2) !important;
+}
 
 img,
 video {
@@ -59,25 +129,26 @@ video {
   display: block;
 }
 
-html, 
-body, 
-div, 
-section, 
-nav, 
-header, 
-footer, 
-button, 
-input, 
+html,
+body,
+div,
+section,
+nav,
+header,
+footer,
+button,
+input,
 textarea {
-  transition: 
-    background-color 0.3s ease-in-out, 
-    color 0.3s ease-in-out, 
+  transition:
+    background-color 0.3s ease-in-out,
+    color 0.3s ease-in-out,
     border-color 0.3s ease-in-out,
     box-shadow 0.3s ease-in-out;
 }
 
 * {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-property:
+    background-color, border-color, color, fill, stroke, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
 }

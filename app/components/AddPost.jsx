@@ -57,7 +57,7 @@ export default function AddPost() {
       <p className="mx-2 my-2 mb-8 flex h-34 items-center justify-center gap-1.5 px-4 py-4 text-center font-semibold text-primary">
         Please{" "}
         <a href="/login" className="text-blue-400">
-          log in
+          LOGIN
         </a>{" "}
         to post.
       </p>

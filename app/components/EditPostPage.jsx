@@ -54,7 +54,7 @@ const EditPostPage = ({ id, body }) => {
   };
 
   return (
-    <div className="sticky z-10 container flex flex-col border-r-1 border-gray-200 py-2 md:w-2/4">
+    <div className="reddit-main-column sticky z-10 flex w-full flex-col border-r-1 border-gray-200 py-2">
       <form
         onSubmit={handleSubmit}
         className="mb-6 flex flex-col justify-around border-b-1 border-gray-200"
@@ -72,7 +72,7 @@ const EditPostPage = ({ id, body }) => {
             <button
               type="button"
               onClick={removeImage}
-              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-1"
+              className="bg-opacity-50 absolute top-2 right-2 rounded-full bg-black p-1 text-white"
             >
               &times;
             </button>
@@ -87,9 +87,9 @@ const EditPostPage = ({ id, body }) => {
             onChange={handleImageChange}
             className="hidden"
           />
-              <label htmlFor="editImageInput">
-                <PiImageSquareBold className="cursor-pointer hover:text-muted" />
-              </label>
+          <label htmlFor="editImageInput">
+            <PiImageSquareBold className="hover:text-muted cursor-pointer" />
+          </label>
 
           <div className="flex flex-row justify-end-safe">
             <button className="mx-2 my-2 h-10 cursor-pointer rounded-3xl bg-gray-500 px-4 text-sm font-bold text-white hover:bg-blue-400">

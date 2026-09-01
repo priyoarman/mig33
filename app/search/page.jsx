@@ -60,24 +60,23 @@ const SearchResults = () => {
     fetchResults();
   }, [query]);
 
-  const filteredPosts = activeTab === "all" || activeTab === "posts" ? posts : [];
-  const filteredUsers = activeTab === "all" || activeTab === "users" ? users : [];
+  const filteredPosts =
+    activeTab === "all" || activeTab === "posts" ? posts : [];
+  const filteredUsers =
+    activeTab === "all" || activeTab === "users" ? users : [];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-panel text-primary">
-      <div className="flex-1 flex flex-col border-r border-default lg:w-2/4">
+    <div className="reddit-main-column bg-panel text-primary flex h-screen w-full overflow-hidden">
+      <div className="border-default flex w-full flex-1 flex-col border-r">
         {/* Search Header */}
-        <div className="sticky top-0 z-10 border-b border-default bg-panel bg-opacity-80 backdrop-blur-sm px-4 py-3">
+        <div className="border-default bg-panel bg-opacity-80 sticky top-0 z-10 border-b px-4 py-3 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-2xl hover-accent rounded-full p-2"
-            >
+            <Link href="/" className="hover-accent rounded-full p-2 text-2xl">
               ←
             </Link>
             <div className="flex-1">
               <p className="text-xl font-bold">Search Results</p>
-              <p className="text-sm text-secondary">
+              <p className="text-secondary text-sm">
                 {query.length > 50 ? query.substring(0, 50) + "..." : query}
               </p>
             </div>
@@ -85,12 +84,12 @@ const SearchResults = () => {
         </div>
 
         {/* Tabs */}
-        <div className="sticky top-14 z-10 flex border-b border-default bg-panel bg-opacity-80 backdrop-blur-sm">
+        <div className="border-default bg-panel bg-opacity-80 sticky top-14 z-10 flex border-b backdrop-blur-sm">
           <button
             onClick={() => setActiveTab("all")}
             className={`flex-1 px-4 py-3 text-center font-semibold transition ${
               activeTab === "all"
-                ? "border-b-2 border-accent text-accent"
+                ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"
             }`}
           >
@@ -100,7 +99,7 @@ const SearchResults = () => {
             onClick={() => setActiveTab("posts")}
             className={`flex-1 px-4 py-3 text-center font-semibold transition ${
               activeTab === "posts"
-                ? "border-b-2 border-accent text-accent"
+                ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"
             }`}
           >
@@ -110,7 +109,7 @@ const SearchResults = () => {
             onClick={() => setActiveTab("users")}
             className={`flex-1 px-4 py-3 text-center font-semibold transition ${
               activeTab === "users"
-                ? "border-b-2 border-accent text-accent"
+                ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"
             }`}
           >
@@ -121,7 +120,7 @@ const SearchResults = () => {
         {/* Results */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex h-96 items-center justify-center">
               <div className="animate-spin">
                 <BsSearch size={32} className="text-secondary" />
               </div>
@@ -129,7 +128,7 @@ const SearchResults = () => {
           ) : (
             <>
               {filteredPosts.length === 0 && filteredUsers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-96 text-center px-4">
+                <div className="flex h-96 flex-col items-center justify-center px-4 text-center">
                   <BsSearch size={48} className="text-secondary mb-4" />
                   <p className="text-xl font-bold">No results found</p>
                   <p className="text-secondary">
@@ -149,12 +148,12 @@ const SearchResults = () => {
 
                   {/* Users Results */}
                   {filteredUsers.length > 0 && (
-                    <div className="border-t border-default">
+                    <div className="border-default border-t">
                       {filteredUsers.map((user) => (
                         <Link
                           key={user._id}
                           href={`/profile/${user.username}`}
-                          className="flex items-center gap-4 px-4 py-3 hover-accent border-b border-default transition"
+                          className="hover-accent border-default flex items-center gap-4 border-b px-4 py-3 transition"
                         >
                           {user.profileImage ? (
                             <Image
@@ -165,19 +164,21 @@ const SearchResults = () => {
                               className="rounded-full"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-bold text-white">
                               {user.username.charAt(0).toUpperCase()}
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold truncate">{user.name}</p>
-                            <p className="text-secondary truncate">@{user.username}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-bold">{user.name}</p>
+                            <p className="text-secondary truncate">
+                              @{user.username}
+                            </p>
                             {user.bio && (
-                              <p className="text-sm text-secondary line-clamp-2 mt-1">
+                              <p className="text-secondary mt-1 line-clamp-2 text-sm">
                                 {user.bio}
                               </p>
                             )}
-                            <p className="text-xs text-secondary mt-1">
+                            <p className="text-secondary mt-1 text-xs">
                               {user.followers?.length || 0} followers
                             </p>
                           </div>
@@ -199,7 +200,7 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center bg-panel">
+        <div className="bg-panel flex h-screen items-center justify-center">
           <div className="animate-spin">
             <BsSearch size={32} className="text-secondary" />
           </div>

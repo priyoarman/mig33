@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const MessagesPage = () => {
   return (
-    <div className="sticky z-10 container flex flex-col border-r-1 border-gray-200 py-2 lg:w-2/4">
+    <div className="reddit-main-column sticky z-10 flex w-full flex-col border-r-1 border-gray-200 py-2">
       <div className="flex h-12 flex-row items-stretch justify-between border-b-1 border-gray-200 sm:hidden">
         <div className="flex cursor-pointer px-4">
           <MiniProfile />
@@ -27,7 +27,7 @@ const MessagesPage = () => {
           <BsSearch />
         </div>
       </div>
-      <div className="flex flex-col py-4 h-screen justify-center items-center animate-pulse">
+      <div className="flex h-screen animate-pulse flex-col items-center justify-center py-4">
         <h1 className="flex w-full items-center justify-center space-y-2 text-center text-2xl font-semibold text-blue-400">
           Hello there!
         </h1>

@@ -17,11 +17,19 @@ import {
 import Image from "next/image";
 import RemoveBtn from "./RemoveBtn";
 
-
-const ProfilePage = ({ posts }) => {
+const ProfilePage = ({ posts, profileStats = {}, profileUser = {} }) => {
   const { data: session } = useSession();
   const [likesCount, setLikesCount] = React.useState({});
   const [liked, setLiked] = React.useState({});
+
+  const user = {
+    name: profileUser?.name || session?.user?.name || "User",
+    username: profileUser?.username || session?.user?.username || "username",
+    bio: profileUser?.bio || "Here goes my short bio for Y",
+    website: profileUser?.website || "",
+    profileImage: profileUser?.profileImage || session?.user?.image || null,
+    coverImage: profileUser?.coverImage || null,
+  };
 
   React.useEffect(() => {
     const initialLikes = {};
@@ -61,79 +69,132 @@ const ProfilePage = ({ posts }) => {
   };
 
   return (
-    <div className="sticky sm:w-2/4 flex flex-col container border-r-1 border-default">
+    <div className="reddit-main-column border-default sticky flex w-full flex-col border-r-1">
       <div className="w-full">
-        <div className="flex flex-row w-full h-42 justify-center items-center bg-gray-500 text-2xl text-white">
-          {session?.user?.image ? (
-            <img
-              src={session.user.image}
-              alt={`${session.user.name || 'User'} cover`}
-              className="h-[100%] w-[100%] object-cover"
-            />
+        <div className="relative h-52 w-full overflow-hidden bg-gray-800 text-2xl text-white">
+          {user.coverImage ? (
+            <>
+              <Image
+                src={user.coverImage}
+                alt={`${user.name || "User"} cover`}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30" />
+            </>
           ) : (
-            <div className="h-[100%] w-[100%] bg-gray-500" />
+            <div className="h-full w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500" />
           )}
         </div>
-        <div className="flex flex-row justify-between h-36 w-full">
-          <div className="flex container justify-center items-center h-32 w-32 ml-6 mt-[-64] rounded-full border-4 border-gray-50 text-2xl text-white overflow-hidden">
-            {session?.user?.image ? (
-              <img
-                src={session.user.image}
-                alt={`${session.user.name || 'User'} avatar`}
-                className="h-[100%] w-[100%] object-cover rounded-full"
-              />
+        <div className="flex h-auto min-h-36 w-full flex-row justify-between gap-3 pt-2">
+          <div className="container mt-[-64] ml-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-50 bg-gray-200 text-2xl text-white">
+            {user.profileImage ? (
+              <div className="relative h-full w-full">
+                <Image
+                  src={user.profileImage}
+                  alt={`${user.name || "User"} avatar`}
+                  fill
+                  sizes="128px"
+                  className="rounded-full object-cover"
+                />
+              </div>
             ) : (
               <div className="flex h-[100%] w-[100%] items-center justify-center bg-cyan-500 text-3xl font-bold text-white">
-                {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
             )}
           </div>
-          <div className="py-2 px-2">
-            <button onClick={() => signOut()} className="rounded-full px-4 py-2 bg-red-500 text-white font-semibold hover:bg-red-600 cursor-pointer text-shadow-xs text-sm">
+          <div className="relative z-20 flex flex-col gap-2 px-2 py-2">
+            <button
+              onClick={() => signOut()}
+              className="cursor-pointer rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white text-shadow-xs hover:bg-red-600"
+            >
               Log Out
             </button>
+            <Link
+              href="/profile/edit"
+              className="border-default bg-panel text-primary cursor-pointer rounded-full border px-4 py-2 text-center text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-800"
+            >
+              Edit Profile
+            </Link>
           </div>
         </div>
       </div>
 
-      <div className="p-4 flex flex-col gap-1 mt-[-72] bg-panel">
+      <div className="bg-panel mt-[-72] flex flex-col gap-1 p-4">
         <div className="pb-2">
-          <div className="text-xl text-primary font-bold">{session?.user?.name}</div>
-          <div className="text-[17px] text-primary font-medium">
-            {session?.user?.username ? `@${session.user.username}` : "@username"}
+          <div className="text-primary text-xl font-bold">{user.name}</div>
+          <div className="text-primary text-[17px] font-medium">
+            @{user.username}
           </div>
         </div>
 
-        <div className="flex felx-row w-fit text-[16px] text-primary">
-          Here goes my short bio for Y
+        <div className="felx-row text-primary flex w-fit text-[16px]">
+          {user.bio || "Tell the world a little about yourself."}
         </div>
 
-        <div className="flex felx-row gap-4 w-fit text-[16px]">
-          <div className="flex flex-row gap-2">
-            <p className="flex flex-row pt-1 text-muted"><FaLink/></p>
-            <a href="https://github.com/priyoarman" className="text-blue-400 hover:underline cursor-pointer">github.com/priyoarman</a>
-          </div>
-          <div className="sm:flex flex-row gap-2 hidden">
-            <p className="flex flex-row pt-1 text-muted"><IoCalendarOutline/></p>
-            <a className="text-muted cursor-pointer">Joined October 2024</a>
+        <div className="felx-row flex w-fit gap-4 text-[16px]">
+          {user.website ? (
+            <div className="flex flex-row gap-2">
+              <p className="text-muted flex flex-row pt-1">
+                <FaLink />
+              </p>
+              <a
+                href={
+                  user.website.startsWith("http")
+                    ? user.website
+                    : `https://${user.website}`
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="cursor-pointer text-blue-400 hover:underline"
+              >
+                {user.website.replace(/^https?:\/\//, "")}
+              </a>
+            </div>
+          ) : null}
+          <div className="hidden flex-row gap-2 sm:flex">
+            <p className="text-muted flex flex-row pt-1">
+              <IoCalendarOutline />
+            </p>
+            <a className="text-muted cursor-pointer">
+              {profileStats.joinedAt
+                ? `Joined ${new Intl.DateTimeFormat("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  }).format(new Date(profileStats.joinedAt))}`
+                : "Joined recently"}
+            </a>
           </div>
         </div>
 
-        <div className="flex felx-row w-fit gap-2 text-[16px] text-gray-800 font-medium">
-          <p><span className="font-bold">0</span> Followers</p>
-          <p><span className="font-bold">0</span> Following</p>
-          
+        <div className="felx-row flex w-fit gap-2 text-[16px] font-medium text-gray-800">
+          <p>
+            <span className="font-bold">
+              {profileStats.followersCount ?? 0}
+            </span>{" "}
+            Followers
+          </p>
+          <p>
+            <span className="font-bold">
+              {profileStats.followingCount ?? 0}
+            </span>{" "}
+            Following
+          </p>
         </div>
       </div>
 
-      <h2 className="text-primary text-xl font-bold px-4 py-4 mb-4 border-y-1 border-default">Posts</h2>
+      <h2 className="text-primary border-default mb-4 border-y-1 px-4 py-4 text-xl font-bold">
+        Posts
+      </h2>
 
       {posts.length ? (
-        <div className="z-20 bg-panel pb-2">
+        <div className="bg-panel z-20 pb-2">
           {posts.map((post) => (
             <div
               key={post._id}
-              className="z-20 flex w-full flex-row gap-2 border-slate-300 bg-panel shadow-xs transition-all hover:shadow-sm sm:gap-0 hover-panel"
+              className="bg-panel hover-panel z-20 flex w-full flex-row gap-2 border-slate-300 shadow-xs transition-all hover:shadow-sm sm:gap-0"
             >
               <div className="flex w-1/12 flex-col items-start justify-items-start px-4 py-4">
                 <div className="flex h-10 w-10 rounded-full bg-neutral-600"></div>
@@ -204,11 +265,13 @@ const ProfilePage = ({ posts }) => {
                     ) : (
                       <AiOutlineHeart className="text-lg" />
                     )}
-                    <p className="font-semi text-sm">{likesCount[post._id] || 0}</p>
+                    <p className="font-semi text-sm">
+                      {likesCount[post._id] || 0}
+                    </p>
                   </div>
 
                   <Link
-                    className="flex cursor-pointer flex-row justify-center gap-1.5 text-muted hover:text-blue-500"
+                    className="text-muted flex cursor-pointer flex-row justify-center gap-1.5 hover:text-blue-500"
                     href={`/posts/${post._id}/comments`}
                   >
                     <AiOutlineComment className="cursor-pointer text-lg font-bold" />
@@ -217,14 +280,14 @@ const ProfilePage = ({ posts }) => {
                     </p>
                   </Link>
 
-                  <div className="flex cursor-pointer flex-row justify-center gap-1.5 text-muted hover:text-green-500">
+                  <div className="text-muted flex cursor-pointer flex-row justify-center gap-1.5 hover:text-green-500">
                     <button className="flex flex-row items-center justify-center justify-items-center">
                       <AiOutlineRetweet className="cursor-pointer text-lg font-bold" />
                     </button>
                     <p className="font-semi mt-0.5 flex flex-row text-sm">0</p>
                   </div>
 
-                  <div className="flex cursor-pointer flex-row justify-center gap-1.5 text-muted hover:text-yellow-500">
+                  <div className="text-muted flex cursor-pointer flex-row justify-center gap-1.5 hover:text-yellow-500">
                     <button className="flex flex-row items-center justify-center justify-items-center">
                       <AiOutlineEye className="cursor-pointer text-lg font-bold" />
                     </button>
@@ -236,7 +299,7 @@ const ProfilePage = ({ posts }) => {
           ))}
         </div>
       ) : (
-        <p className="text-primary text-lg mx-4 mb-4">
+        <p className="text-primary mx-4 mb-4 text-lg">
           You haven't posted anything yet.
         </p>
       )}

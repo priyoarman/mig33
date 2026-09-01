@@ -61,14 +61,17 @@ export const authOptions = {
 
     async jwt({ token, user }) {
       await connectMongoDB();
-      const dbUser = await User.findOne({ email: token.email });
+      const dbUser = await User.findOne({ email: token.email || user?.email });
 
       if (!dbUser) {
         return token;
       }
 
       token.id = dbUser._id.toString();
+      token.name = dbUser.name;
+      token.email = dbUser.email;
       token.username = dbUser.username;
+      token.picture = dbUser.profileImage || token.picture;
       return token;
     },
 
@@ -77,6 +80,7 @@ export const authOptions = {
       session.user.name = token.name;
       session.user.email = token.email;
       session.user.username = token.username;
+      session.user.image = token.picture || session.user.image;
       return session;
     },
   },

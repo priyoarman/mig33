@@ -10,45 +10,45 @@ import MiniProfile from "./MiniProfile";
 
 const LeftBar = () => {
   return (
-    <div className="z-20 bg-panel sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-14 sm:flex-col sm:items-stretch sm:justify-center sm:border-r-1 border-default sm:py-3 lg:w-1/4 lg:px-12">
-      <div className="fixed inset-x-0 bottom-0 z-20 flex flex-row items-center justify-around space-y-2 bg-panel py-2 text-primary sm:static sm:inset-auto sm:bottom-auto sm:flex sm:h-screen sm:w-fit sm:flex-col sm:items-start sm:justify-start lg:w-1/4">
+    <div className="reddit-left-column bg-panel border-default z-20 sm:sticky sm:top-0 sm:flex sm:h-screen sm:flex-col sm:items-stretch sm:justify-center sm:border-r-1 sm:py-3 lg:px-3">
+      <div className="bg-panel text-primary fixed inset-x-0 bottom-0 z-20 flex flex-row items-center justify-around space-y-2 px-4 py-2 sm:static sm:inset-auto sm:bottom-auto sm:flex sm:h-screen sm:w-full sm:flex-col sm:items-start sm:justify-start">
         <Link
           href={"/"}
-          className="hidden hover-panel sm:flex sm:w-full sm:items-center sm:justify-start sm:space-x-1 sm:rounded-3xl sm:px-1 sm:py-2 sm:pl-5 sm:text-[28px] sm:font-bold text-accent sm:transition sm:duration-200"
+          className="hover-panel text-accent hidden sm:flex sm:w-full sm:items-center sm:justify-start sm:space-x-1 sm:rounded-3xl sm:px-1 sm:py-2 sm:pl-5 sm:text-[28px] sm:font-bold sm:transition sm:duration-200"
         >
           <Image
-            src="/ReDI.png"
-            width={24}
-            height={24}
-            alt="ReDI"
+            src="/mig33.png"
+            width={56}
+            height={56}
+            alt="mig33"
             className="animate-[spin_5s] [animation-iteration-count:infinite]"
           />
           {/* <p className="hidden lg:block">Twitter</p> */}
         </Link>
         <Link
           href={"/"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 mt-2 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent mt-2 flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
         >
           <GoHomeFill className="text-2xl" />
           <p className="hidden lg:block">Home</p>
         </Link>
         <Link
           href={"/explore"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
         >
           <MdExplore className="text-2xl" />
           <p className="hidden lg:block">Explore</p>
         </Link>
         <Link
           href={"/search"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
         >
           <BsSearch className="text-2xl" />
           <p className="hidden lg:block">Search</p>
         </Link>
         <Link
           href={"/notifications"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
         >
           <FaBell className="text-2xl" />
 
@@ -56,19 +56,19 @@ const LeftBar = () => {
         </Link>
         <Link
           href={"/messages"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl"
         >
           <FaEnvelope className="text-xl" />
 
-          <p className="hidden lg:block ml-1">Messages</p>
+          <p className="ml-1 hidden lg:block">Messages</p>
         </Link>
         <Link
           href={"/profile"}
-          className="flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pb-4 pl-4 text-2xl font-bold text-primary transition duration-200 hover-accent sm:justify-start sm:pb-2 lg:w-fit lg:px-4 lg:text-xl"
+          className="text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pb-4 pl-4 text-2xl font-bold transition duration-200 sm:justify-start sm:pb-2 lg:w-fit lg:px-4 lg:text-xl"
         >
           <FaUserCircle className="text-xl" />
 
-          <p className="hidden lg:block ml-1">Profile</p>
+          <p className="ml-1 hidden lg:block">Profile</p>
         </Link>
       </div>
 

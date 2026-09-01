@@ -42,7 +42,7 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="sticky container flex h-screen w-full flex-col place-items-center items-center justify-center pb-32 sm:pb-0 sm:w-screen lg:w-2/4">
+    <div className="sticky container flex h-screen w-full flex-col place-items-center items-center justify-center pb-32 border-r-1 border-default sm:pb-0 sm:w-screen lg:w-2/4">
       <div className="place-items-center px-5">
         <h1 className="flex flex-row justify-center items-center text-2xl font-semibold text-gray-700">
           Enter your details
