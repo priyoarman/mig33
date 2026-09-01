@@ -1,1 +1,0 @@
-Yeah. It is showing in the profile photo now. But I also want the photo to be shown in the postcard. Like where I have force pushed a neutral-600 background of h-10 and w-10 now.
