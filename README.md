@@ -1,6 +1,6 @@
 A Twitter‑style feed and social app built with Next.JS, NextAuth, MongoDB and Tailwind CSS. Developed as part of ReDI School Germany’s Fullstack Development Bootcamp curriculum.
 
-Live Demo: https://redilink.vercel.app/
+Live Demo: https://mig33.vercel.app/
 
 ## 🚀 Features
 
