@@ -134,19 +134,19 @@ const OtherUserProfilePage = ({
         </div>
 
         <div className="flex h-auto min-h-36 w-full flex-row justify-between gap-3 pt-2">
-          <div className="relative z-20 container mt-[-64] ml-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-50 bg-gray-200 text-2xl text-white">
+          <div className="avatar-square relative z-20 container mt-[-64] ml-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-50 bg-gray-200 text-2xl text-white">
             {user.profileImage ? (
-              <div className="relative h-full w-full">
+              <div className="relative h-full w-full overflow-hidden rounded-full">
                 <Image
                   src={user.profileImage}
                   alt={`${user.name || "User"} avatar`}
                   fill
                   sizes="128px"
-                  className="rounded-full object-cover"
+                  className="h-full w-full rounded-full object-cover"
                 />
               </div>
             ) : (
-              <div className="flex h-[100%] w-[100%] items-center justify-center bg-cyan-500 text-3xl font-bold text-white">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-cyan-500 text-3xl font-bold text-white">
                 {user.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
             )}

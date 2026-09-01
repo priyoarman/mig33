@@ -100,13 +100,15 @@ const RightBarBottom = () => {
                   className="flex min-w-0 flex-1 items-center space-x-2"
                 >
                   {user.profileImage ? (
-                    <Image
-                      src={user.profileImage}
-                      alt={user.name}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 flex-none rounded-full object-cover"
-                    />
+                    <div className="avatar-square h-10 w-10 flex-none overflow-hidden rounded-full">
+                      <Image
+                        src={user.profileImage}
+                        alt={user.name}
+                        width={40}
+                        height={40}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-neutral-600 text-sm font-bold text-white">
                       {user.name?.charAt(0)?.toUpperCase() || "U"}

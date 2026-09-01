@@ -10,11 +10,13 @@ import Link from "next/link";
 
 function UserAvatar({ user }) {
   return user?.profileImage ? (
-    <img
-      src={user.profileImage}
-      alt=""
-      className="h-10 w-10 rounded-full object-cover"
-    />
+    <div className="avatar-square h-10 w-10 overflow-hidden rounded-full">
+      <img
+        src={user.profileImage}
+        alt=""
+        className="h-full w-full rounded-full object-cover"
+      />
+    </div>
   ) : (
     <span className="bg-accent text-on-accent flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold">
       {user?.name?.charAt(0)?.toUpperCase() || "?"}

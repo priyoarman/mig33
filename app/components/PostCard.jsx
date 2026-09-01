@@ -100,15 +100,15 @@ export default function PostCard({ post }) {
     <>
       <article className="group border-default bg-panel w-full border-b transition-colors hover:bg-[rgba(15,20,25,0.01)]">
         <div className="flex w-full flex-row gap-3 px-3 py-3 sm:gap-3 sm:px-4">
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
+          <div className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
             {post.authorImage ? (
               <img
                 src={post.authorImage}
                 alt={`${post.authorName || "User"} avatar`}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-full object-cover"
               />
             ) : (
-              <span>
+              <span className="flex h-full w-full items-center justify-center rounded-full">
                 {post.authorName
                   ? post.authorName.charAt(0).toUpperCase()
                   : "U"}
@@ -177,19 +177,19 @@ export default function PostCard({ post }) {
               )}
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-2 text-sm text-neutral-500">
+            <div className="mt-3 flex items-center justify-between gap-2 pr-8 text-sm text-neutral-500 sm:pr-12">
               <div
-                className={`group flex items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors ${liked ? "text-red-600" : "hover:bg-red-500/10 hover:text-red-600"}`}
+                className={`group flex items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors ${liked ? "text-red-600" : "hover:cursor-default hover:bg-red-500/10 hover:text-red-600"}`}
                 onClick={handleLike}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:bg-red-500/10">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-red-500/10">
                   {liked ? (
                     <AiFillHeart className="text-[18px]" />
                   ) : (
                     <AiOutlineHeart className="text-[18px]" />
                   )}
                 </span>
-                <span className="min-w-[1.5rem] text-[13px] font-medium">
+                <span className="min-w-[1.5rem] text-[13px] font-medium hover:cursor-default">
                   {likesCount}
                 </span>
               </div>
@@ -197,9 +197,9 @@ export default function PostCard({ post }) {
               <button
                 type="button"
                 onClick={() => setIsCommentsOpen(true)}
-                className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:bg-blue-500/10 hover:text-blue-500"
+                className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:cursor-default hover:bg-blue-500/10 hover:text-blue-500"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:bg-blue-500/10">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-blue-500/10">
                   <AiOutlineComment className="text-[18px]" />
                 </span>
                 <span className="min-w-[1.5rem] text-[13px] font-medium">
@@ -207,18 +207,9 @@ export default function PostCard({ post }) {
                 </span>
               </button>
 
-              <div className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:bg-green-500/10 hover:text-green-500">
-                <button className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:bg-green-500/10">
+              <div className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:cursor-default hover:bg-green-500/10 hover:text-green-500">
+                <button className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-green-500/10">
                   <AiOutlineRetweet className="text-[18px]" />
-                </button>
-                <span className="min-w-[1.5rem] text-[13px] font-medium">
-                  0
-                </span>
-              </div>
-
-              <div className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:bg-yellow-500/10 hover:text-yellow-500">
-                <button className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:bg-yellow-500/10">
-                  <AiOutlineEye className="text-[18px]" />
                 </button>
                 <span className="min-w-[1.5rem] text-[13px] font-medium">
                   0
@@ -261,15 +252,15 @@ export default function PostCard({ post }) {
             <div className="max-h-[calc(90vh-4.5rem)] overflow-y-auto">
               <div className="border-b border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
                 <div className="flex items-center gap-3">
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
+                  <div className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
                     {post.authorImage ? (
                       <img
                         src={post.authorImage}
                         alt={`${post.authorName || "User"} avatar`}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
-                      <span>
+                      <span className="flex h-full w-full items-center justify-center rounded-full">
                         {post.authorName
                           ? post.authorName.charAt(0).toUpperCase()
                           : "U"}

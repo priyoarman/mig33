@@ -54,13 +54,15 @@ const ConnectionsModal = ({ type, users, onClose }) => {
                 className="hover-panel flex items-center gap-3 px-5 py-3"
               >
                 {user.profileImage ? (
-                  <Image
-                    src={user.profileImage}
-                    alt={user.name}
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
+                  <div className="avatar-square h-10 w-10 overflow-hidden rounded-full">
+                    <Image
+                      src={user.profileImage}
+                      alt={user.name}
+                      width={40}
+                      height={40}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 font-bold text-white">
                     {user.name?.charAt(0)?.toUpperCase() || "U"}

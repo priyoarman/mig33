@@ -154,6 +154,34 @@ body,
   background-color: rgba(255, 255, 255, 0.02) !important;
 }
 
+.avatar-square,
+.avatar-square > img,
+.avatar-square > div,
+.avatar-square > span,
+.avatar-image,
+.avatar-image > img,
+.avatar-image > div {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.avatar-square > img,
+.avatar-image > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-round,
+.avatar-round > *,
+.avatar-image,
+.avatar-image > * {
+  border-radius: 9999px !important;
+  overflow: hidden;
+}
+
 /* Hover/interactive states - components should opt-in with these classes */
 .hover-panel:hover {
   background-color: var(--panel-hover, rgba(255, 255, 255, 0.03)) !important;

@@ -98,11 +98,13 @@ export default function CommentsSection({
               >
                 <div className="flex-shrink-0 pt-1">
                   {c.profileImage ? (
-                    <img
-                      src={c.profileImage}
-                      alt={`${c.name} avatar`}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
+                    <div className="avatar-square h-8 w-8 overflow-hidden rounded-full">
+                      <img
+                        src={c.profileImage}
+                        alt={`${c.name} avatar`}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-600 text-xs font-bold text-white">
                       {c.name ? c.name.charAt(0).toUpperCase() : "U"}

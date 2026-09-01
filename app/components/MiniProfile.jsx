@@ -27,17 +27,17 @@ const MiniProfile = ({ compact = false }) => {
 
   if (compact) {
     return (
-      <div className="flex-shrink-0">
+      <div className="avatar-square h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
         {user?.image ? (
           <Image
             src={user.image}
             alt={user.name || "User"}
             width={32}
             height={32}
-            className="h-8 w-8 rounded-full object-cover"
+            className="h-full w-full rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-600 text-sm font-bold text-white">
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-neutral-600 text-sm font-bold text-white">
             {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
           </div>
         )}
@@ -63,17 +63,17 @@ const MiniProfile = ({ compact = false }) => {
           </button>
         </div>
       )}
-      <div className="flex-shrink-0">
+      <div className="avatar-square h-10 w-10 flex-shrink-0 overflow-hidden rounded-full">
         {user?.image ? (
           <Image
             src={user.image}
             alt={user.name || "User"}
             width={40}
             height={40}
-            className="rounded-full object-cover"
+            className="h-full w-full rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-600 font-bold text-white">
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-neutral-600 font-bold text-white">
             {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
           </div>
         )}
