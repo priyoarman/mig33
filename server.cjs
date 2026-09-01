@@ -5,8 +5,19 @@ const mongoose = require("mongoose");
 const { getToken } = require("next-auth/jwt");
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
+const hostname = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
+
+process.env.AUTH_TRUST_HOST = "true";
+
+const resolveRequestOrigin = (request) => {
+  const host = request.headers["x-forwarded-host"] || request.headers.host;
+  if (!host) return null;
+  const protocol =
+    request.headers["x-forwarded-proto"]?.split(",")[0]?.trim() ||
+    (dev ? "http" : "https");
+  return `${protocol}://${host}`;
+};
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 const messageSchema = new mongoose.Schema(
@@ -33,6 +44,20 @@ const connectDatabase = () => {
   return databaseConnection;
 };
 
+const parseCookieHeader = (cookieHeader = "") => {
+  const cookies = {};
+  cookieHeader.split(";").forEach((part) => {
+    const trimmed = part.trim();
+    if (!trimmed) return;
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) return;
+    const name = trimmed.slice(0, separator);
+    const value = trimmed.slice(separator + 1);
+    cookies[name] = decodeURIComponent(value);
+  });
+  return cookies;
+};
+
 app.prepare().then(() => {
   const httpServer = createServer((request, response) =>
     handle(request, response),
@@ -52,10 +77,17 @@ app.prepare().then(() => {
       const usesSecureCookie = cookieHeader.includes(
         "__Secure-next-auth.session-token=",
       );
+      const cookieName = usesSecureCookie
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token";
       const token = await getToken({
-        req: socket.request,
+        req: {
+          headers: socket.request.headers,
+          cookies: parseCookieHeader(cookieHeader),
+        },
         secret: process.env.NEXTAUTH_SECRET,
         secureCookie: usesSecureCookie,
+        cookieName,
       });
       if (!token?.id) return nextMiddleware(new Error("Unauthorized"));
       socket.userId = token.id;

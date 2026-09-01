@@ -37,13 +37,18 @@ export function RealtimeProvider({ children }) {
 
     const socket = io(
       process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin,
-      { auth: { userId: session.user.id.toString() } },
+      {
+        withCredentials: true,
+        auth: { userId: session.user.id.toString() },
+      },
     );
     setSocket(socket);
     const handleSocketError = (error) => {
       setSocketError(error?.message || "Live messaging is unavailable");
     };
+    const handleSocketConnect = () => setSocketError("");
     socket.on("connect_error", handleSocketError);
+    socket.on("connect", handleSocketConnect);
 
     socket.on("notification", (notification) => {
       setNotifications((current) => [notification, ...current].slice(0, 50));
@@ -53,6 +58,7 @@ export function RealtimeProvider({ children }) {
     return () => {
       socket.disconnect();
       socket.off("connect_error", handleSocketError);
+      socket.off("connect", handleSocketConnect);
       setSocket((current) => (current === socket ? null : current));
     };
   }, [session?.user?.id, status]);
