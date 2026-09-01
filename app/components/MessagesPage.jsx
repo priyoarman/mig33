@@ -26,13 +26,29 @@ const MessagesPage = () => {
   const { socket, socketError } = useRealtimeNotifications();
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [incomingNotice, setIncomingNotice] = useState("");
   const messagesEndRef = useRef(null);
+
+  const loadConversations = () => {
+    fetch("/api/messages")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setConversations(data?.conversations || []))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    if (status !== "authenticated") return undefined;
+    loadConversations();
+    const timer = setInterval(loadConversations, 5000);
+    return () => clearInterval(timer);
+  }, [status]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -67,6 +83,9 @@ const MessagesPage = () => {
             ? current
             : [...current, message],
         );
+      } else if (message.recipientId === session?.user?.id) {
+        setIncomingNotice("New message received");
+        loadConversations();
       }
     };
     socket.on("message", receiveMessage);
@@ -74,11 +93,23 @@ const MessagesPage = () => {
   }, [activeUser, session?.user?.id, socket]);
 
   useEffect(() => {
+    if (!activeUser) return undefined;
+    const timer = setInterval(async () => {
+      const response = await fetch(`/api/messages?userId=${activeUser._id}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setMessages(data.messages || []);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [activeUser]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const openConversation = async (user) => {
     setActiveUser(user);
+    setIncomingNotice("");
     setQuery("");
     setUsers([]);
     setLoading(true);
@@ -97,16 +128,35 @@ const MessagesPage = () => {
     }
   };
 
-  const sendMessage = (event) => {
+  const sendMessage = async (event) => {
     event.preventDefault();
     const text = content.trim();
-    if (!text || !activeUser || !socket || !socket.connected || sending) {
-      if (!socket || !socket.connected)
-        setError("Connecting to live messaging...");
+    if (!text || !activeUser || sending) {
       return;
     }
     setSending(true);
     setError("");
+    if (!socket || !socket.connected) {
+      try {
+        const response = await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipientId: activeUser._id, content: text }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.message) {
+          throw new Error(result.error || "Message could not be sent.");
+        }
+        setMessages((current) => [...current, result.message]);
+        setContent("");
+        loadConversations();
+      } catch (sendError) {
+        setError(sendError.message);
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     let acknowledged = false;
     const timeout = setTimeout(() => {
       if (!acknowledged) {
@@ -179,6 +229,34 @@ const MessagesPage = () => {
             />
           </label>
           <div className="mt-4 divide-y divide-gray-200">
+            {incomingNotice && (
+              <button
+                type="button"
+                onClick={() => setIncomingNotice("")}
+                className="w-full border-b border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm text-blue-700"
+              >
+                {incomingNotice}
+              </button>
+            )}
+            {conversations.map(({ user, latestMessage }) => (
+              <button
+                key={user._id}
+                type="button"
+                onClick={() => openConversation(user)}
+                className="hover-panel flex w-full items-center gap-3 px-3 py-4 text-left"
+              >
+                <UserAvatar user={user} />
+                <span className="min-w-0 flex-1">
+                  <strong className="block">{user.name}</strong>
+                  <span className="block truncate text-sm text-gray-500">
+                    {latestMessage.content}
+                  </span>
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(latestMessage.createdAt).toLocaleDateString()}
+                </span>
+              </button>
+            ))}
             {users.map((user) => (
               <button
                 key={user._id}
@@ -196,7 +274,7 @@ const MessagesPage = () => {
               </button>
             ))}
           </div>
-          {!query && (
+          {!query && !conversations.length && (
             <p className="mt-16 text-center text-gray-500">
               Search for a user to start a conversation.
             </p>

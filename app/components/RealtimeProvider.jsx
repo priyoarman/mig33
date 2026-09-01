@@ -35,16 +35,37 @@ export function RealtimeProvider({ children }) {
       })
       .catch(() => {});
 
-    const socket = io(
-      process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin,
-      {
-        withCredentials: true,
-        auth: { userId: session.user.id.toString() },
-      },
-    );
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const canUseLocalSocket =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const socket = socketUrl || canUseLocalSocket
+      ? io(socketUrl || window.location.origin, {
+          withCredentials: true,
+          auth: { userId: session.user.id.toString() },
+        })
+      : null;
     setSocket(socket);
+    const loadNotifications = () => {
+      fetch("/api/notifications")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (!data) return;
+          setNotifications((current) => {
+            const merged = [...(data.notifications || []), ...current];
+            return [...new Map(merged.map((item) => [item.id, item])).values()]
+              .slice(0, 50);
+          });
+          setUnreadCount(data.unreadCount || 0);
+        })
+        .catch(() => {});
+    };
+    const notificationPoll = setInterval(loadNotifications, 5000);
+    if (!socket) {
+      return () => clearInterval(notificationPoll);
+    }
     const handleSocketError = (error) => {
-      setSocketError(error?.message || "Live messaging is unavailable");
+      setSocketError("");
     };
     const handleSocketConnect = () => setSocketError("");
     socket.on("connect_error", handleSocketError);
@@ -57,6 +78,7 @@ export function RealtimeProvider({ children }) {
 
     return () => {
       socket.disconnect();
+      clearInterval(notificationPoll);
       socket.off("connect_error", handleSocketError);
       socket.off("connect", handleSocketConnect);
       setSocket((current) => (current === socket ? null : current));
