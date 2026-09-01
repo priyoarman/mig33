@@ -198,12 +198,6 @@ export default function AddPost() {
                 <MdOutlineGifBox className="hover:text-muted cursor-pointer" />
               </button>
             </div>
-            <div className="pl-6 text-2xl text-cyan-500">
-              <input type="file" name="" id="listUpload" hidden />
-              <label htmlFor="listUpload">
-                <HiMiniListBullet className="hover:text-muted cursor-pointer" />
-              </label>
-            </div>
           </div>
 
           <button

@@ -209,7 +209,7 @@ export default function EditProfilePage() {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="border-default bg-panel w-full rounded-xl border px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                className="border-default bg-panel w-full rounded-xl border px-3 py-2 text-sm placeholder:text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 placeholder="Your name"
               />
             </div>
@@ -221,20 +221,20 @@ export default function EditProfilePage() {
                 rows={4}
                 value={form.bio}
                 onChange={handleChange}
-                className="border-default bg-panel w-full rounded-xl border px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                className="border-default bg-panel w-full rounded-xl border px-3 py-2 text-sm placeholder:text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 placeholder="Tell people about yourself"
               />
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium">
-                Website / link
+                Website
               </label>
               <input
                 name="website"
                 value={form.website}
                 onChange={handleChange}
-                className="border-default bg-panel w-full rounded-xl border px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                className="border-default bg-panel w-full rounded-xl border px-3 py-2 text-sm placeholder:text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 placeholder="https://example.com"
               />
             </div>
@@ -244,14 +244,14 @@ export default function EditProfilePage() {
             <button
               type="button"
               onClick={() => router.push("/profile")}
-              className="border-default rounded-full border px-5 py-2 font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="border-default rounded-full border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-cyan-500 px-5 py-2 font-semibold text-white hover:bg-cyan-600 disabled:opacity-60"
+              className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-60"
             >
               {loading ? "Saving..." : "Save profile"}
             </button>

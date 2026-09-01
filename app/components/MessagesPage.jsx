@@ -198,9 +198,6 @@ const MessagesPage = () => {
   return (
     <div className="bg-panel text-primary flex min-h-screen w-full flex-col border-r border-gray-200">
       <header className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-        <div className="sm:hidden">
-          <MiniProfile />
-        </div>
         {activeUser && (
           <button
             type="button"

@@ -1,5 +1,6 @@
 import LeftBar from "./components/LeftBar";
 import RightBar from "./components/RightBar";
+import MobileTopBar from "./components/MobileTopBar";
 import "./globals.css";
 import { AuthProvider } from "./Providers";
 import { Analytics } from "@vercel/analytics/next";
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <div className="reddit-shell reddit-layout text-xl">
             <LeftBar />
+            <MobileTopBar />
             <main className="reddit-main-column min-w-0">{children}</main>
             <Analytics />
             <SpeedInsights />
