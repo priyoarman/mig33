@@ -156,7 +156,7 @@ export default function PostCard({ post }) {
             </div>
 
             <div className="mt-1.5">
-              <p className="text-[15px] leading-6 text-neutral-700 dark:text-neutral-200">
+              <p className="text-[15px] leading-6 break-words whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">
                 {post.body}
               </p>
 
@@ -289,7 +289,7 @@ export default function PostCard({ post }) {
                   </div>
                 </div>
 
-                <p className="mt-3 text-[15px] leading-6 text-neutral-700 dark:text-neutral-200">
+                <p className="mt-3 text-[15px] leading-6 break-words whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">
                   {post.body}
                 </p>
 

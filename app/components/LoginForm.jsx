@@ -36,28 +36,28 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="sticky container flex h-screen w-full flex-col place-items-center items-center justify-center pb-32 border-r-1 border-default sm:w-screen sm:pb-0 lg:w-2/4">
-      <div className="place-items-center px-5">
+    <div className="border-default sticky flex h-screen w-full flex-col items-center justify-center border-r-1 px-4 pb-32 sm:pb-0">
+      <div className="w-full max-w-xl px-5">
         <h1 className="flex flex-row items-center justify-center text-2xl font-semibold text-gray-700">
           Welcome Back!
         </h1>
         <form
           onSubmit={handleSubmit}
-          className="mt-4 flex flex-col items-center justify-center gap-4"
+          className="mt-4 flex w-full flex-col items-center justify-center gap-4"
         >
           <input
-            className="w-full rounded-full border-1 border-gray-200 bg-gray-50 px-6 py-2 text-[16px] text-gray-900 placeholder-gray-500 sm:w-[400px]"
+            className="w-full max-w-md rounded-full border-1 border-gray-200 bg-gray-50 px-6 py-2 text-[16px] text-gray-900 placeholder-gray-500"
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             placeholder="Email"
           />
           <input
-            className="w-full rounded-full border-1 border-gray-200 bg-gray-50 px-6 py-2 text-[16px] text-gray-900 placeholder-gray-500 sm:w-[400px]"
+            className="w-full max-w-md rounded-full border-1 border-gray-200 bg-gray-50 px-6 py-2 text-[16px] text-gray-900 placeholder-gray-500"
             onChange={(e) => setPassword(e.target.value)}
             type="password"
             placeholder="Password"
           />
-          <div className="flex w-full flex-col justify-between gap-y-2">
+          <div className="flex w-full max-w-md flex-col justify-between gap-y-2">
             <button className="w-full cursor-pointer rounded-full bg-blue-400 px-4 py-2 text-[16px] text-white hover:bg-blue-500">
               Login
             </button>
@@ -72,15 +72,20 @@ const LoginForm = () => {
           </div>
         </form>
         {error && (
-          <div className="mt-4 w-fit animate-pulse rounded-sm bg-red-500 px-3 py-1 text-sm text-white">
-            {error}
+          <div className="mt-4 flex justify-center">
+            <div className="animate-pulse rounded-sm bg-red-500 px-3 py-1 text-sm text-white">
+              {error}
+            </div>
           </div>
         )}
       </div>
       <div className="flex flex-col py-4 text-lg text-gray-700">OR</div>
 
-      <div className="flex flex-col gap-y-4">
-        <button onClick={() => signIn("google", { callbackUrl: "/profile" })} className="flex cursor-pointer flex-row items-center justify-between gap-x-2 rounded-full border-1 border-gray-200 px-4 py-2">
+      <div className="flex w-full max-w-md flex-col gap-y-4 px-5">
+        <button
+          onClick={() => signIn("google", { callbackUrl: "/profile" })}
+          className="flex w-full cursor-pointer flex-row items-center justify-center gap-x-2 rounded-full border-1 border-gray-200 px-4 py-2"
+        >
           <FcGoogle />
           <span className="text-[16px] font-light text-gray-600">
             Continue with Google
@@ -92,7 +97,10 @@ const LoginForm = () => {
             Continue with Facebook
           </span>
         </button> */}
-        <button onClick={() => signIn("github", { callbackUrl: "/profile" })} className="flex cursor-pointer flex-row items-center justify-between gap-x-2 rounded-full border-1 border-gray-200 px-4 py-2">
+        <button
+          onClick={() => signIn("github", { callbackUrl: "/profile" })}
+          className="flex w-full cursor-pointer flex-row items-center justify-center gap-x-2 rounded-full border-1 border-gray-200 px-4 py-2"
+        >
           <FaGithub />
           <span className="text-[16px] font-light text-gray-600">
             Continue with Github

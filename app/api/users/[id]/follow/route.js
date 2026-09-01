@@ -3,6 +3,7 @@ import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { createAndEmitNotification } from "@/lib/realtime";
 
 export async function POST(request, { params }) {
   try {
@@ -44,6 +45,18 @@ export async function POST(request, { params }) {
     }
 
     await Promise.all([currentUser.save(), targetUser.save()]);
+
+    if (!isFollowing) {
+      await createAndEmitNotification(targetUserId, {
+        type: "follow",
+        message: "started following you.",
+        actorId: currentUserId,
+        actor: {
+          name: currentUser.name,
+          username: currentUser.username,
+        },
+      });
+    }
 
     return NextResponse.json({
       following: !isFollowing,

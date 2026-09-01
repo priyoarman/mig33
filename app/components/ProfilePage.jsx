@@ -32,11 +32,15 @@ const ProfilePage = ({
   const user = {
     name: profileUser?.name || session?.user?.name || "User",
     username: profileUser?.username || session?.user?.username || "username",
-    bio: profileUser?.bio || "Here goes my short bio for Y",
+    bio: profileUser?.bio || "",
     website: profileUser?.website || "",
     profileImage: profileUser?.profileImage || session?.user?.image || null,
     coverImage: profileUser?.coverImage || null,
   };
+
+  const bioText = user.bio?.trim()
+    ? user.bio
+    : `${user.name || user.username || "This user"} has not updated his/her bio yet.`;
 
   React.useEffect(() => {
     const initialLikes = {};
@@ -137,8 +141,12 @@ const ProfilePage = ({
           </div>
         </div>
 
-        <div className="felx-row text-primary flex w-fit text-[16px]">
-          {user.bio || "Tell the world a little about yourself."}
+        <div
+          className={`felx-row flex w-fit text-[16px] ${
+            user.bio?.trim() ? "text-primary" : "text-muted"
+          }`}
+        >
+          {bioText}
         </div>
 
         <div className="felx-row flex w-fit gap-4 text-[16px]">
@@ -246,7 +254,7 @@ const ProfilePage = ({
                 </div>
 
                 <div>
-                  <p className="my-4 px-1 text-lg text-neutral-600 sm:pl-0">
+                  <p className="my-4 px-1 text-lg break-words whitespace-pre-wrap text-neutral-600 sm:pl-0">
                     {post.body}
                   </p>
                   <div className="my-4 cursor-pointer text-neutral-600"></div>

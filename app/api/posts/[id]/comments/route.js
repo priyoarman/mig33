@@ -4,6 +4,7 @@ import Post from "@/models/posts";
 import User from "@/models/user";
 import connectMongoDB from "@/lib/mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { createAndEmitNotification } from "@/lib/realtime";
 
 export async function GET(request, { params }) {
   await connectMongoDB();
@@ -70,6 +71,20 @@ export async function POST(request, { params }) {
 
     // Fetch user to get profile image
     const user = await User.findById(session.user.id).lean();
+
+    const postAuthorId = post.authorId?.toString();
+    if (postAuthorId && postAuthorId !== session.user.id.toString()) {
+      await createAndEmitNotification(postAuthorId, {
+        type: "comment",
+        message: "commented on your post.",
+        actorId: session.user.id,
+        actor: {
+          name: session.user.name || "Someone",
+          username: session.user.username,
+        },
+        postId: post._id.toString(),
+      });
+    }
 
     return NextResponse.json({
       commentsCount: post.comments.length,

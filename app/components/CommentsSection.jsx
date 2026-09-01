@@ -147,7 +147,9 @@ export default function CommentsSection({
                     </div>
                   </div>
 
-                  <p className="flex py-4">{c.body}</p>
+                  <p className="flex py-4 break-words whitespace-pre-wrap">
+                    {c.body}
+                  </p>
                 </div>
               </div>
             ))

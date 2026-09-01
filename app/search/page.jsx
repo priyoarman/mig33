@@ -75,7 +75,7 @@ const SearchResults = () => {
               ←
             </Link>
             <div className="flex-1">
-              <p className="text-xl font-bold">Search Results</p>
+              <p className="text-xl font-bold">Explore</p>
               <p className="text-secondary text-sm">
                 {query.length > 50 ? query.substring(0, 50) + "..." : query}
               </p>

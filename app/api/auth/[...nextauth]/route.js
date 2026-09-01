@@ -33,6 +33,7 @@ export const authOptions = {
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   pages: { signIn: "/login" },
   callbacks: {
     async signIn({ user, account }) {
