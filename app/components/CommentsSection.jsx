@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 import { FiTrash2 } from "react-icons/fi";
 import { HiOutlinePencilAlt } from "react-icons/hi";
 
-export default function CommentsSection({ postId, initialComments }) {
+export default function CommentsSection({
+  postId,
+  initialComments = [],
+  onCommentAdded,
+  onCommentDeleted,
+}) {
   const { data: session } = useSession();
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
 
   const handleAdd = async () => {
     if (!session) {
@@ -20,7 +28,7 @@ export default function CommentsSection({ postId, initialComments }) {
     if (!newComment.trim()) {
       alert("Write something to comment!");
       return;
-    };
+    }
 
     setSaving(true);
     try {
@@ -35,19 +43,18 @@ export default function CommentsSection({ postId, initialComments }) {
         return;
       }
       const data = await res.json();
-      setComments((c) => [
-        ...c,
-        {
-          id: data.latestComment._id,
-          userId: data.latestComment.user,
-          name: data.latestComment.name,
-          username: data.latestComment.username,
-          email: data.latestComment.email,
-          profileImage: data.latestComment.profileImage,
-          body: data.latestComment.body,
-          createdAt: data.latestComment.createdAt,
-        },
-      ]);
+      const freshComment = {
+        id: data.latestComment._id,
+        userId: data.latestComment.user,
+        name: data.latestComment.name,
+        username: data.latestComment.username,
+        email: data.latestComment.email,
+        profileImage: data.latestComment.profileImage,
+        body: data.latestComment.body,
+        createdAt: data.latestComment.createdAt,
+      };
+      setComments((c) => [...c, freshComment]);
+      onCommentAdded?.(freshComment);
       setNewComment("");
     } catch (e) {
       console.error(e);
@@ -68,6 +75,7 @@ export default function CommentsSection({ postId, initialComments }) {
         return;
       }
       setComments((c) => c.filter((comment) => comment.id !== commentId));
+      onCommentDeleted?.(commentId);
     } catch (e) {
       console.error(e);
       alert("Error deleting comment");
@@ -75,70 +83,80 @@ export default function CommentsSection({ postId, initialComments }) {
   };
 
   return (
-    <div className="z-10 flex w-full flex-row gap-1 bg-surface shadow-md transition-all hover:shadow-lg pb-8 sm:gap-0">
+    <div className="bg-surface z-10 flex w-full flex-row gap-1 pb-8 shadow-md transition-all hover:shadow-lg sm:gap-0">
       <div className="flex w-full flex-col">
-        <div className="space">
-          {comments.map((c) => (
-            <div
-              key={c.id}
-              className="flex w-full flex-row gap-2 border border-default p-2 pl-4 text-[16px]"
-            >
-              {/* Avatar */}
-              <div className="flex-shrink-0 pt-1">
-                {c.profileImage ? (
-                  <img
-                    src={c.profileImage}
-                    alt={`${c.name} avatar`}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-600 text-white text-xs font-bold">
-                    {c.name ? c.name.charAt(0).toUpperCase() : "U"}
-                  </div>
-                )}
-              </div>
-
-              {/* Comment content */}
-              <div className="flex w-full flex-col">
-                <div className="flex flex-row justify-between gap-2">
-                  <div className="flex flex-col sm:flex-row sm:gap-2">
-                    <p className="flex font-semibold text-primary">{c.name}</p>
-                    <p className="flex font-semibold text-muted">@{c.username || "user"}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-neutral-400">
-                      {new Date(c.createdAt).toLocaleDateString()}
-                    </span>
-                    {session?.user?.id === c.userId && (
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => alert("Edit comment feature coming soon")}
-                          className="text-cyan-500 hover:text-cyan-600 cursor-pointer"
-                          title="Edit comment"
-                        >
-                          <HiOutlinePencilAlt size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteComment(c.id)}
-                          className="text-red-500 hover:text-red-600 cursor-pointer"
-                          title="Delete comment"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+        <div className="space-y-3">
+          {comments.length === 0 ? (
+            <div className="px-4 py-6 text-sm text-neutral-500">
+              No comments yet. Start the conversation.
+            </div>
+          ) : (
+            comments.map((c) => (
+              <div
+                key={c.id}
+                className="border-default flex w-full flex-row gap-2 border p-2 pl-4 text-[16px]"
+              >
+                <div className="flex-shrink-0 pt-1">
+                  {c.profileImage ? (
+                    <img
+                      src={c.profileImage}
+                      alt={`${c.name} avatar`}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-600 text-xs font-bold text-white">
+                      {c.name ? c.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
                 </div>
 
-                <p className="flex py-4">{c.body}</p>
+                <div className="flex w-full flex-col">
+                  <div className="flex flex-row justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:gap-2">
+                      <p className="text-primary flex font-semibold">
+                        {c.name}
+                      </p>
+                      <p className="text-muted flex font-semibold">
+                        @{c.username || "user"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-neutral-400">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
+                      {session?.user?.id === c.userId && (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() =>
+                              alert("Edit comment feature coming soon")
+                            }
+                            className="cursor-pointer text-cyan-500 hover:text-cyan-600"
+                            title="Edit comment"
+                          >
+                            <HiOutlinePencilAlt size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="cursor-pointer text-red-500 hover:text-red-600"
+                            title="Delete comment"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="flex py-4">{c.body}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="mt-4">
           <textarea
-            className="h-24 w-full resize-none border-b-1 border-default bg-surface px-4 py-4 outline-0 placeholder:font-medium"
+            className="border-default bg-surface h-24 w-full resize-none border-b-1 px-4 py-4 outline-0 placeholder:font-medium"
             rows={3}
             placeholder="Write a comment…"
             value={newComment}

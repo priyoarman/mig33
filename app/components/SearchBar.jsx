@@ -101,8 +101,8 @@ export default function SearchBar() {
 
   return (
     <div className="relative w-full" ref={searchRef}>
-      <div className="flex items-center bg-gray-100 dark:bg-gray-900 rounded-full px-4 py-2 border border-gray-300 dark:border-gray-700 focus-within:border-blue-400">
-        <BsSearch className="text-gray-500 dark:text-gray-400" />
+      <div className="flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-4 py-2 focus-within:border-cyan-400 dark:border-neutral-700 dark:bg-neutral-900">
+        <BsSearch className="text-neutral-500 dark:text-neutral-400" />
         <input
           type="text"
           placeholder="Search for posts, users, hashtags..."
@@ -114,7 +114,7 @@ export default function SearchBar() {
             }
           }}
           onFocus={() => searchQuery.trim() && setShowDropdown(true)}
-          className="w-full ml-3 bg-transparent outline-none placeholder-gray-500 dark:placeholder-gray-400 text-sm placeholder:text-sm"
+          className="ml-3 w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-500 dark:text-neutral-100 dark:placeholder:text-neutral-400"
         />
         {searchQuery && (
           <button
@@ -123,7 +123,7 @@ export default function SearchBar() {
               setSuggestions([]);
               setShowDropdown(false);
             }}
-            className="ml-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="ml-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
           >
             <MdClose size={20} />
           </button>
@@ -132,19 +132,21 @@ export default function SearchBar() {
 
       {/* Search Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
           {isSearching ? (
-            <div className="p-4 text-center text-gray-500">Searching...</div>
+            <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">
+              Searching...
+            </div>
           ) : (
             <>
               {/* Tabs */}
-              <div className="flex border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
+              <div className="sticky top-0 flex border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
                 <button
                   onClick={() => setActiveTab("all")}
                   className={`flex-1 px-4 py-2 text-center font-semibold ${
                     activeTab === "all"
-                      ? "text-blue-500 border-b-2 border-blue-500"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "border-b-2 border-blue-500 text-blue-500"
+                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                   }`}
                 >
                   All
@@ -153,8 +155,8 @@ export default function SearchBar() {
                   onClick={() => setActiveTab("posts")}
                   className={`flex-1 px-4 py-2 text-center font-semibold ${
                     activeTab === "posts"
-                      ? "text-blue-500 border-b-2 border-blue-500"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "border-b-2 border-blue-500 text-blue-500"
+                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                   }`}
                 >
                   Posts
@@ -163,8 +165,8 @@ export default function SearchBar() {
                   onClick={() => setActiveTab("users")}
                   className={`flex-1 px-4 py-2 text-center font-semibold ${
                     activeTab === "users"
-                      ? "text-blue-500 border-b-2 border-blue-500"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "border-b-2 border-blue-500 text-blue-500"
+                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                   }`}
                 >
                   Users
@@ -173,63 +175,77 @@ export default function SearchBar() {
 
               {/* Results */}
               <div className="p-2">
-                {(activeTab === "all" || activeTab === "posts") && displayPosts.length > 0 && (
-                  <>
-                    <div className="text-xs font-semibold text-gray-500 px-4 py-2">POSTS</div>
-                    {displayPosts.map((post) => (
-                      <button
-                        key={post._id}
-                        onClick={() => handleSelectSuggestion(post, "post")}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded truncate text-sm"
-                      >
-                        <p className="truncate">{post.body}</p>
-                        <p className="text-xs text-gray-500">by @{post.authorUsername}</p>
-                      </button>
-                    ))}
-                  </>
-                )}
+                {(activeTab === "all" || activeTab === "posts") &&
+                  displayPosts.length > 0 && (
+                    <>
+                      <div className="px-4 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                        POSTS
+                      </div>
+                      {displayPosts.map((post) => (
+                        <button
+                          key={post._id}
+                          onClick={() => handleSelectSuggestion(post, "post")}
+                          className="w-full truncate rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                        >
+                          <p className="truncate text-neutral-900 dark:text-neutral-100">
+                            {post.body}
+                          </p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            by @{post.authorUsername}
+                          </p>
+                        </button>
+                      ))}
+                    </>
+                  )}
 
-                {(activeTab === "all" || activeTab === "users") && displayUsers.length > 0 && (
-                  <>
-                    <div className="text-xs font-semibold text-gray-500 px-4 py-2">USERS</div>
-                    {displayUsers.map((user) => (
-                      <button
-                        key={user._id}
-                        onClick={() => handleSelectSuggestion(user, "user")}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-3 text-sm"
-                      >
-                        {user.profileImage && (
-                          <Image
-                            src={user.profileImage}
-                            alt={user.username}
-                            width={32}
-                            height={32}
-                            className="rounded-full"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold truncate">{user.name}</p>
-                          <p className="text-xs text-gray-500 truncate">@{user.username}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </>
-                )}
+                {(activeTab === "all" || activeTab === "users") &&
+                  displayUsers.length > 0 && (
+                    <>
+                      <div className="px-4 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                        USERS
+                      </div>
+                      {displayUsers.map((user) => (
+                        <button
+                          key={user._id}
+                          onClick={() => handleSelectSuggestion(user, "user")}
+                          className="flex w-full items-center gap-3 rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                        >
+                          {user.profileImage && (
+                            <Image
+                              src={user.profileImage}
+                              alt={user.username}
+                              width={32}
+                              height={32}
+                              className="rounded-full"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">
+                              {user.name}
+                            </p>
+                            <p className="truncate text-xs text-neutral-500">
+                              @{user.username}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
 
                 {!isSearching &&
                   displayPosts.length === 0 &&
                   displayUsers.length === 0 && (
-                    <div className="p-4 text-center text-gray-500 text-sm">
+                    <div className="p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
                       No results found
                     </div>
                   )}
               </div>
 
               {/* Search Button */}
-              <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+              <div className="border-t border-gray-200 p-2 dark:border-gray-700">
                 <button
                   onClick={() => handleSearch(searchQuery)}
-                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 text-sm"
+                  className="w-full rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
                 >
                   Search for "{searchQuery}"
                 </button>

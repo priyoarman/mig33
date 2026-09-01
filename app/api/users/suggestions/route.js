@@ -11,9 +11,20 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
 
+    const currentUser = currentUserId
+      ? await User.findById(currentUserId).select("following").lean()
+      : null;
+    const currentUserFollowing = new Set(
+      Array.isArray(currentUser?.following)
+        ? currentUser.following.map((id) => id.toString())
+        : [],
+    );
+
     const query = currentUserId
       ? {
-          _id: { $ne: currentUserId },
+          _id: {
+            $nin: [currentUserId, ...currentUserFollowing],
+          },
         }
       : {};
 
@@ -24,11 +35,8 @@ export async function GET() {
       .lean();
 
     const suggestionList = users.map((user) => {
-      const following = Array.isArray(user.following)
-        ? user.following.map(String)
-        : [];
       const isFollowing = currentUserId
-        ? following.includes(currentUserId)
+        ? currentUserFollowing.has(user._id.toString())
         : false;
 
       return {

@@ -7,27 +7,56 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request, { params }) {
   await connectMongoDB();
-  const post = await Post.findById(params.id)
+  const { id } = await params;
+  const post = await Post.findById(id)
     .select("comments")
+    .populate("comments.user", "name username email profileImage")
     .lean();
+
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(post.comments || []);
+
+  const mappedComments = (post.comments || []).map((comment) => {
+    const user =
+      comment.user && typeof comment.user === "object" ? comment.user : null;
+
+    return {
+      id: comment._id.toString(),
+      userId: user?._id
+        ? user._id.toString()
+        : comment.user?.toString?.() || null,
+      name: user?.name || comment.name || "Unknown",
+      username: user?.username || comment.username || "user",
+      email: user?.email || comment.email || "Unknown",
+      profileImage: user?.profileImage || null,
+      body: comment.body,
+      createdAt: comment.createdAt
+        ? new Date(comment.createdAt).toISOString()
+        : new Date().toISOString(),
+    };
+  });
+
+  return NextResponse.json(mappedComments);
 }
 
 export async function POST(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    if (!session)
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
     const { comment } = await request.json();
     if (!comment?.trim()) {
-      return NextResponse.json({ error: "Comment cannot be empty" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Comment cannot be empty" },
+        { status: 400 },
+      );
     }
 
     await connectMongoDB();
-    const {id} = await params;
+    const { id } = await params;
     const post = await Post.findById(id);
-    if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!post)
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     post.comments.push({
       user: session.user.id,
@@ -38,20 +67,20 @@ export async function POST(request, { params }) {
     await post.save();
 
     const latest = post.comments[post.comments.length - 1].toObject();
-    
+
     // Fetch user to get profile image
     const user = await User.findById(session.user.id).lean();
-    
+
     return NextResponse.json({
       commentsCount: post.comments.length,
       latestComment: {
-        _id:       latest._id.toString(),
-        user:      latest.user.toString(),
-        name:      session.user.name || "Unknown",
-        username:  latest.username,
-        email:     latest.email,
+        _id: latest._id.toString(),
+        user: latest.user.toString(),
+        name: session.user.name || "Unknown",
+        username: latest.username,
+        email: latest.email,
         profileImage: user?.profileImage || null,
-        body:      latest.body,
+        body: latest.body,
         createdAt: latest.createdAt.toISOString(),
       },
     });

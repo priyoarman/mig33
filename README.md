@@ -4,27 +4,27 @@ Live Demo: https://redilink.vercel.app/
 
 ## 🚀 Features
 
-* **User Authentication** (Email/Password & Google/Github OAuth)
-* **Create, Read & List Tweets**
-* **Upload Images With Cloudinary or Fetch GIF From Tenor API**
-* **Edit (Update) & Delete Own Tweets If Authenticated**
-* **Like and Comment Tweets**
-* **User Profiles** with their own tweet feeds
-* **Theme Switcher** (Dark/Light mode)
-* **Responsive UI** using Tailwind CSS
-* **Server‑side API routes** in Next.js
-* **Database ORM** powered by Mongoose
+- **User Authentication** (Email/Password & Google/Github OAuth)
+- **Create, Read & List Tweets**
+- **Upload Images With Cloudinary or Fetch GIF From Giphy API**
+- **Edit (Update) & Delete Own Tweets If Authenticated**
+- **Like and Comment Tweets**
+- **User Profiles** with their own tweet feeds
+- **Theme Switcher** (Dark/Light mode)
+- **Responsive UI** using Tailwind CSS
+- **Server‑side API routes** in Next.js
+- **Database ORM** powered by Mongoose
 
 ## 🛠️ Tech Stack
 
-| Layer          | Technology                  |
-| -------------- | --------------------------- |
-| Framework      | Next.js 16 (App Router)     |
-| Styling        | Tailwind CSS, Custom CSS    |
-| Authentication | NextAuth.js                 |
-| ORM / Database | Mongoose (MongoDB)          |
-| Language       | JavaScript                  |
-| Deployment     | Vercel                      |
+| Layer          | Technology               |
+| -------------- | ------------------------ |
+| Framework      | Next.js 16 (App Router)  |
+| Styling        | Tailwind CSS, Custom CSS |
+| Authentication | NextAuth.js              |
+| ORM / Database | Mongoose (MongoDB)       |
+| Language       | JavaScript               |
+| Deployment     | Vercel                   |
 
 ## 📦 Installation
 
@@ -69,7 +69,7 @@ Live Demo: https://redilink.vercel.app/
    CLOUDINARY_CLOUD_NAME="your-cloudinary-generated-name"
    CLOUDINARY_API_KEY="your-cloudinary-generated-key"
    CLOUDINARY_API_SECRET="your-cloudinary-generated-secret"
-   TENOR_API_KEY="your-tenor-generated-key"
+   GIPHY_API_KEY="your-giphy-generated-key"
    ```
 
 4. **Run mongoose migrations** (if you're using MongoDB):

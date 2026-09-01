@@ -10,8 +10,8 @@ import MiniProfile from "./MiniProfile";
 
 const LeftBar = () => {
   return (
-    <div className="reddit-left-column bg-panel border-default z-20 sm:sticky sm:top-0 sm:flex sm:h-screen sm:flex-col sm:items-stretch sm:justify-center sm:border-r-1 sm:py-3 lg:px-3">
-      <div className="bg-panel text-primary fixed inset-x-0 bottom-0 z-20 flex flex-row items-center justify-around space-y-2 px-4 py-2 sm:static sm:inset-auto sm:bottom-auto sm:flex sm:h-screen sm:w-full sm:flex-col sm:items-start sm:justify-start">
+    <aside className="reddit-left-column bg-panel border-default z-0 sm:sticky sm:top-0 sm:flex sm:h-screen sm:flex-col sm:items-stretch sm:justify-center sm:border-r-1 sm:py-3 lg:px-3">
+      <div className="bg-panel text-primary fixed inset-x-0 bottom-0 z-0 flex flex-row items-center justify-around space-y-2 px-4 py-2 sm:static sm:inset-auto sm:bottom-auto sm:flex sm:h-screen sm:w-full sm:flex-col sm:items-start sm:justify-start">
         <Link
           href={"/"}
           className="hover-panel text-accent hidden sm:flex sm:w-full sm:items-center sm:justify-start sm:space-x-1 sm:rounded-3xl sm:px-1 sm:py-2 sm:pl-5 sm:text-[28px] sm:font-bold sm:transition sm:duration-200"
@@ -75,7 +75,7 @@ const LeftBar = () => {
       <div className="hidden w-full flex-row justify-between gap-2 rounded-sm px-2 py-2 lg:flex">
         <MiniProfile />
       </div>
-    </div>
+    </aside>
   );
 };
 

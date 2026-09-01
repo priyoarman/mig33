@@ -6,54 +6,62 @@ export async function GET(request) {
     const q = searchParams.get("q") || "";
     const limit = searchParams.get("limit") || "30";
 
-    const apiKey = process.env.TENOR_API_KEY;
+    const apiKey = process.env.GIPHY_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "TENOR_API_KEY not configured" },
-        { status: 500 }
+        { error: "GIPHY_API_KEY not configured" },
+        { status: 500 },
       );
     }
 
-    // Call Tenor API using the v2 endpoint (as per Google's docs)
-    const tenorUrl = `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
-      q
-    )}&key=${apiKey}&limit=${limit}`;
+    const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(
+      q,
+    )}&limit=${limit}&rating=g`;
 
-    const response = await fetch(tenorUrl);
+    const response = await fetch(giphyUrl);
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Tenor API error:", errorText);
+      console.error("Giphy API error:", errorText);
       return NextResponse.json(
-        { error: "Failed to fetch from Tenor API" },
-        { status: response.status }
+        { error: "Failed to fetch from Giphy API" },
+        { status: response.status },
       );
     }
 
     const data = await response.json();
 
-    // Extract GIF URLs from Tenor response
-    // Tenor returns results with media_formats containing gif, nanogif, mediumgif, etc.
-    const results = (data.results || []).map((item) => {
-      try {
-        if (item.media_formats && item.media_formats.gif) {
+    const results = (data.data || [])
+      .map((item) => {
+        try {
+          const url =
+            item.images?.original?.url ||
+            item.images?.downsized?.url ||
+            item.images?.fixed_height?.url;
+
+          const preview =
+            item.images?.fixed_height_small?.url ||
+            item.images?.downsized_medium?.url ||
+            url;
+
+          if (!url) return null;
+
           return {
-            url: item.media_formats.gif.url,
-            preview: item.media_formats.nanogif?.url || item.media_formats.gif.url,
+            url,
+            preview,
             id: item.id,
           };
+        } catch (e) {
+          return null;
         }
-        return null;
-      } catch (e) {
-        return null;
-      }
-    }).filter(Boolean);
+      })
+      .filter(Boolean);
 
     return NextResponse.json({ results });
   } catch (err) {
-    console.error("Tenor search error:", err);
+    console.error("Giphy search error:", err);
     return NextResponse.json(
-      { error: "Server error during Tenor search" },
-      { status: 500 }
+      { error: "Server error during Giphy search" },
+      { status: 500 },
     );
   }
 }

@@ -38,12 +38,12 @@ export default function AddPost() {
       setIsGifSearching(true);
       try {
         const res = await fetch(
-          `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`
+          `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`,
         );
         const data = await res.json();
         setGifResults(data.results || []);
       } catch (err) {
-        console.error("Tenor search error:", err);
+        console.error("Giphy search error:", err);
       } finally {
         setIsGifSearching(false);
       }
@@ -54,7 +54,7 @@ export default function AddPost() {
   if (status === "loading") return null;
   if (!session) {
     return (
-      <p className="mx-2 my-2 mb-8 flex h-34 items-center justify-center gap-1.5 px-4 py-4 text-center font-semibold text-primary">
+      <p className="text-primary mx-2 my-2 mb-8 flex h-34 items-center justify-center gap-1.5 px-4 py-4 text-center font-semibold">
         Please{" "}
         <a href="/login" className="text-blue-400">
           LOGIN
@@ -79,19 +79,19 @@ export default function AddPost() {
     setSelectedGifUrl(null);
   };
 
-  // Search Tenor GIFs (kept for explicit/manual triggering if needed)
-  const searchTenorGifs = async () => {
+  // Search Giphy GIFs (kept for explicit/manual triggering if needed)
+  const searchGifs = async () => {
     if (!gifSearchQuery.trim()) return;
-    
+
     setIsGifSearching(true);
     try {
       const res = await fetch(
-        `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`
+        `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`,
       );
       const data = await res.json();
       setGifResults(data.results || []);
     } catch (err) {
-      console.error("Tenor search error:", err);
+      console.error("Giphy search error:", err);
       alert("Failed to search GIFs");
     } finally {
       setIsGifSearching(false);
@@ -116,7 +116,7 @@ export default function AddPost() {
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append("body", body);
-    
+
     if (image) {
       formData.append("image", image);
     }
@@ -151,27 +151,31 @@ export default function AddPost() {
     <>
       <form
         onSubmit={handleSubmit}
-        className="z-20 flex flex-col justify-around border-b-1 border-default"
+        className="border-default z-20 flex flex-col justify-around border-b-1"
       >
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="h-24 resize-none border-b-1 border-default bg-panel px-4 py-4 outline-0 placeholder:font-medium"
+          className="border-default bg-panel h-24 resize-none border-b-1 px-4 py-4 outline-0 placeholder:font-medium"
           placeholder="What's happening?"
         />
         {imagePreview && (
-          <div className="relative my-2 mx-4">
-            <img src={imagePreview} alt="Preview" className="rounded-md max-h-60 w-auto" />
+          <div className="relative mx-4 my-2">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="max-h-60 w-auto rounded-md"
+            />
             <button
               type="button"
               onClick={removeImage}
-              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full px-3 py-0.5 pb-1 font-bold"
+              className="bg-opacity-50 absolute top-2 right-2 rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
             >
               &times;
             </button>
           </div>
         )}
-        <div className="flex flex-row items-center justify-between gap-2 bg-panel">
+        <div className="bg-panel flex flex-row items-center justify-between gap-2">
           <input
             type="file"
             id="imageUpload"
@@ -182,22 +186,22 @@ export default function AddPost() {
           <div className="flex flex-row">
             <div className="pl-6 text-2xl text-cyan-500">
               <label htmlFor="imageUpload">
-                <PiImageSquareBold className="cursor-pointer hover:text-muted" />
+                <PiImageSquareBold className="hover:text-muted cursor-pointer" />
               </label>
             </div>
             <div className="pl-6 text-2xl text-cyan-500">
               <button
                 type="button"
                 onClick={() => setGifModalOpen(true)}
-                className="p-0 m-0 bg-none border-none cursor-pointer"
+                className="m-0 cursor-pointer border-none bg-none p-0"
               >
-                <MdOutlineGifBox className="cursor-pointer hover:text-muted" />
+                <MdOutlineGifBox className="hover:text-muted cursor-pointer" />
               </button>
             </div>
             <div className="pl-6 text-2xl text-cyan-500">
               <input type="file" name="" id="listUpload" hidden />
               <label htmlFor="listUpload">
-                <HiMiniListBullet className="cursor-pointer hover:text-muted" />
+                <HiMiniListBullet className="hover:text-muted cursor-pointer" />
               </label>
             </div>
           </div>
@@ -214,59 +218,78 @@ export default function AddPost() {
 
       {/* GIF Search Modal */}
       {gifModalOpen && (
-        <div className="inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-panel w-full max-w-2xl shadow-lg flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-4 border-b-1 border-default">
-              <h2 className="text-lg font-bold">Search GIFs</h2>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/10 px-4 pt-16 backdrop-blur-[1px]">
+          <div className="w-full max-w-[560px] overflow-hidden rounded-[22px] border border-neutral-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] dark:border-neutral-700 dark:bg-neutral-950">
+            <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-900">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-600">
+                  <MdOutlineGifBox className="text-lg" />
+                </div>
+                <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                  Search GIFs
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={() => setGifModalOpen(false)}
-                className="text-muted hover:text-primary text-2xl"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-xl text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-800 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
               >
                 &times;
               </button>
             </div>
 
-            {/* Search Input */}
-            <div className="p-4 border-b-1 border-default flex gap-2">
+            <div className="p-3">
+              <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 fill-none stroke-current text-neutral-500"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="6" />
+                  <path d="M16 16L21 21" />
+                </svg>
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={gifSearchQuery}
                   onChange={(e) => setGifSearchQuery(e.target.value)}
-                  placeholder="Search Tenor GIFs..."
-                  className="flex-1 border-1 border-default rounded px-3 py-2 outline-none focus:border-cyan-500"
+                  placeholder="Search Giphy GIFs..."
+                  className="w-full border-0 bg-transparent text-sm text-neutral-800 outline-none placeholder:text-neutral-500 dark:text-neutral-100"
                 />
+              </div>
             </div>
 
-            {/* GIF Results Grid */}
-            <div className="overflow-y-auto flex-1 p-4">
+            <div className="max-h-[58vh] overflow-y-auto px-3 pb-3">
               {isGifSearching ? (
-                <div className="flex justify-center items-center h-40">
-                  <p className="text-muted">Searching...</p>
+                <div className="flex h-36 items-center justify-center">
+                  <p className="text-sm text-neutral-500">Searching...</p>
                 </div>
               ) : gifResults.length === 0 ? (
-                <div className="flex justify-center items-center h-40">
-                  <p className="text-muted">
-                    {gifSearchQuery ? "No GIFs found" : "Search for GIFs to get started"}
+                <div className="flex h-36 items-center justify-center">
+                  <p className="text-sm text-neutral-500">
+                    {gifSearchQuery
+                      ? "No GIFs found"
+                      : "Search for GIFs to get started"}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {gifResults.map((item, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => selectGif(item.url, item.preview)}
-                      className="relative overflow-hidden rounded-lg hover:opacity-75 transition-opacity group"
+                      className="group relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 transition hover:opacity-90 dark:border-neutral-700 dark:bg-neutral-900"
                     >
                       <img
                         src={item.preview}
                         alt={`gif-${idx}`}
-                        className="w-full h-32 object-cover"
+                        className="h-28 w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity" />
+                      <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />
                     </button>
                   ))}
                 </div>

@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 const RightBarBottom = () => {
+  const router = useRouter();
   const { data: session } = useSession();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,17 +46,22 @@ const RightBarBottom = () => {
         throw new Error(data?.error || "Unable to update follow status");
       }
 
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user._id === userId
-            ? {
-                ...user,
-                isFollowing: data.following,
-                followersCount: data.followersCount,
-              }
-            : user,
-        ),
+      if (data.following) {
+        setUsers((currentUsers) =>
+          currentUsers.filter((user) => user._id !== userId),
+        );
+      }
+
+      const suggestionsRes = await fetch("/api/users/suggestions", {
+        cache: "no-store",
+      });
+      const suggestionsData = await suggestionsRes.json();
+      setUsers(
+        suggestionsRes.ok && Array.isArray(suggestionsData.users)
+          ? suggestionsData.users
+          : [],
       );
+      router.refresh();
     } catch (error) {
       console.error("Follow toggle failed:", error);
     } finally {
@@ -87,7 +95,10 @@ const RightBarBottom = () => {
                 key={user._id}
                 className="hover-panel flex items-center justify-between gap-3 p-4 transition duration-200 last:rounded-b-xl"
               >
-                <div className="flex min-w-0 items-center space-x-2">
+                <Link
+                  href={`/profile/${user.username}`}
+                  className="flex min-w-0 flex-1 items-center space-x-2"
+                >
                   {user.profileImage ? (
                     <Image
                       src={user.profileImage}
@@ -103,14 +114,14 @@ const RightBarBottom = () => {
                   )}
 
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-bold">
+                    <div className="truncate text-sm font-bold hover:underline">
                       {user.name}
                     </div>
                     <div className="text-muted truncate text-xs font-medium">
                       @{user.username}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 <button
                   onClick={() => handleFollow(user._id)}

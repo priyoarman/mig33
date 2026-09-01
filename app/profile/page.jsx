@@ -6,6 +6,14 @@ import Post from "@/models/posts";
 import User from "@/models/user";
 import { redirect } from "next/navigation";
 
+const serializeConnections = (users = []) =>
+  users.filter(Boolean).map((user) => ({
+    _id: user._id.toString(),
+    name: user.name || "User",
+    username: user.username || "username",
+    profileImage: user.profileImage || null,
+  }));
+
 const Profile = async () => {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -22,6 +30,8 @@ const Profile = async () => {
       .select(
         "name username bio website profileImage coverImage followers following createdAt",
       )
+      .populate("followers", "_id name username profileImage")
+      .populate("following", "_id name username profileImage")
       .lean(),
   ]);
 
@@ -72,11 +82,17 @@ const Profile = async () => {
         coverImage: null,
       };
 
+  const connections = {
+    followers: serializeConnections(currentUser?.followers),
+    following: serializeConnections(currentUser?.following),
+  };
+
   return (
     <ProfilePage
       posts={posts}
       profileUser={profileUser}
       profileStats={profileStats}
+      connections={connections}
     />
   );
 };

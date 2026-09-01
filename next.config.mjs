@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
+  images: {
     remotePatterns: [
       {
         protocol: "https",
@@ -17,6 +17,12 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "media.tenor.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.giphy.com",
         port: "",
         pathname: "/**",
       },

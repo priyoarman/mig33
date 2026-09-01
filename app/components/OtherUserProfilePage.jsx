@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { FaLink } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import Link from "next/link";
-import { HiOutlinePencilAlt } from "react-icons/hi";
 import {
   AiOutlineHeart,
   AiFillHeart,
@@ -15,26 +13,32 @@ import {
   AiOutlineEye,
 } from "react-icons/ai";
 import Image from "next/image";
-import RemoveBtn from "./RemoveBtn";
 import ConnectionsModal from "./ConnectionsModal";
 
-const ProfilePage = ({
+const OtherUserProfilePage = ({
   posts,
   profileStats = {},
   profileUser = {},
+  isFollowing = false,
   connections = {},
 }) => {
   const { data: session } = useSession();
   const [likesCount, setLikesCount] = React.useState({});
   const [liked, setLiked] = React.useState({});
+  const [following, setFollowing] = React.useState(isFollowing);
+  const [followersCount, setFollowersCount] = React.useState(
+    profileStats.followersCount ?? 0,
+  );
+  const [pending, setPending] = React.useState(false);
   const [connectionsType, setConnectionsType] = React.useState(null);
 
   const user = {
-    name: profileUser?.name || session?.user?.name || "User",
-    username: profileUser?.username || session?.user?.username || "username",
+    id: profileUser?._id || profileUser?.id || "",
+    name: profileUser?.name || "User",
+    username: profileUser?.username || "username",
     bio: profileUser?.bio || "Here goes my short bio for Y",
     website: profileUser?.website || "",
-    profileImage: profileUser?.profileImage || session?.user?.image || null,
+    profileImage: profileUser?.profileImage || null,
     coverImage: profileUser?.coverImage || null,
   };
 
@@ -49,12 +53,17 @@ const ProfilePage = ({
     setLiked(initialLiked);
   }, [posts]);
 
+  React.useEffect(() => {
+    setFollowing(isFollowing);
+    setFollowersCount(profileStats.followersCount ?? 0);
+  }, [isFollowing, profileStats.followersCount]);
+
   const handleLike = async (postId) => {
     const newLiked = !liked[postId];
     setLiked((prev) => ({ ...prev, [postId]: newLiked }));
     setLikesCount((prev) => ({
       ...prev,
-      [postId]: prev[postId] + (newLiked ? 1 : -1),
+      [postId]: (prev[postId] || 0) + (newLiked ? 1 : -1),
     }));
 
     const res = await fetch(`/api/posts/${postId}/like`, {
@@ -66,12 +75,37 @@ const ProfilePage = ({
       setLiked((prev) => ({ ...prev, [postId]: newLikedState }));
       setLikesCount((prev) => ({ ...prev, [postId]: newCount }));
     } else {
-      // rollback
       setLiked((prev) => ({ ...prev, [postId]: !newLiked }));
       setLikesCount((prev) => ({
         ...prev,
-        [postId]: prev[postId] + (newLiked ? -1 : 1),
+        [postId]: (prev[postId] || 0) + (newLiked ? -1 : 1),
       }));
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    if (!session?.user?.id || !user.id) return;
+
+    setPending(true);
+
+    try {
+      const res = await fetch(`/api/users/${user.id}/follow`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Unable to update follow status");
+      }
+
+      setFollowing(Boolean(data.following));
+      if (typeof data.followersCount === "number") {
+        setFollowersCount(data.followersCount);
+      }
+    } catch (error) {
+      console.error("Follow toggle failed:", error);
+    } finally {
+      setPending(false);
     }
   };
 
@@ -94,6 +128,7 @@ const ProfilePage = ({
             <div className="h-full w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500" />
           )}
         </div>
+
         <div className="flex h-auto min-h-36 w-full flex-row justify-between gap-3 pt-2">
           <div className="relative z-20 container mt-[-64] ml-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-50 bg-gray-200 text-2xl text-white">
             {user.profileImage ? (
@@ -112,19 +147,28 @@ const ProfilePage = ({
               </div>
             )}
           </div>
+
           <div className="relative z-20 flex flex-col gap-2 px-2 py-2">
-            <button
-              onClick={() => signOut()}
-              className="cursor-pointer rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white text-shadow-xs hover:bg-red-600"
-            >
-              Log Out
-            </button>
-            <Link
-              href="/profile/edit"
-              className="border-default bg-panel text-primary cursor-pointer rounded-full border px-4 py-2 text-center text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-800"
-            >
-              Edit Profile
-            </Link>
+            {!session?.user?.id ? (
+              <Link
+                href="/login"
+                className="cursor-pointer rounded-full bg-cyan-500 px-4 py-2 text-center text-sm font-semibold text-white text-shadow-xs hover:bg-cyan-600"
+              >
+                Log in to follow
+              </Link>
+            ) : session?.user?.id === user.id ? null : (
+              <button
+                onClick={handleFollowToggle}
+                disabled={pending}
+                className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-white transition text-shadow-xs disabled:cursor-not-allowed disabled:opacity-60 ${
+                  following
+                    ? "bg-cyan-500 hover:bg-cyan-600"
+                    : "bg-gray-500 hover:bg-cyan-500"
+                }`}
+              >
+                {pending ? "..." : following ? "Following" : "Follow"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -182,10 +226,7 @@ const ProfilePage = ({
             onClick={() => setConnectionsType("followers")}
             className="cursor-pointer hover:underline"
           >
-            <span className="font-bold">
-              {profileStats.followersCount ?? 0}
-            </span>{" "}
-            Followers
+            <span className="font-bold">{followersCount}</span> Followers
           </button>
           <button
             type="button"
@@ -231,25 +272,12 @@ const ProfilePage = ({
                       {new Date(post.createdAt).toLocaleDateString()}
                     </h4>
                   </div>
-
-                  <div className="flex flex-row items-end justify-end">
-                    <div className="mt-2 flex w-full flex-row justify-around gap-2">
-                      <Link
-                        className="pt-0.5 text-cyan-500"
-                        href={`/editPost/${post._id}`}
-                      >
-                        <HiOutlinePencilAlt />
-                      </Link>
-                      <RemoveBtn id={post._id} />
-                    </div>
-                  </div>
                 </div>
 
                 <div>
                   <p className="my-4 px-1 text-lg text-neutral-600 sm:pl-0">
                     {post.body}
                   </p>
-                  <div className="my-4 cursor-pointer text-neutral-600"></div>
                   {post.images && post.images.length > 0 && (
                     <div className="mt-2 overflow-hidden rounded-xl">
                       {post.images.map((image, index) => (
@@ -315,7 +343,7 @@ const ProfilePage = ({
         </div>
       ) : (
         <p className="text-primary mx-4 mb-4 text-lg">
-          You haven't posted anything yet.
+          This user hasn&apos;t posted anything yet.
         </p>
       )}
 
@@ -330,4 +358,4 @@ const ProfilePage = ({
   );
 };
 
-export default ProfilePage;
+export default OtherUserProfilePage;
