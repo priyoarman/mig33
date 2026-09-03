@@ -1,6 +1,27 @@
-import mongoose, { Schema, models } from "mongoose";
+import mongoose, { Model, Schema, Types, models } from "mongoose";
 
-const userSchema = new Schema(
+interface ISearchHistory {
+  query: string;
+  type?: "post" | "user";
+  createdAt: Date;
+}
+
+export interface IUser {
+  name: string;
+  email: string;
+  username: string;
+  password?: string;
+  profileImage?: string | null;
+  coverImage?: string | null;
+  bio?: string;
+  location?: string;
+  website?: string;
+  following: Types.ObjectId[];
+  followers: Types.ObjectId[];
+  searchHistory: ISearchHistory[];
+}
+
+const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
@@ -61,6 +82,8 @@ const userSchema = new Schema(
   },
 );
 
-const User = models.User || mongoose.model("User", userSchema);
+const User =
+  (models.User as Model<IUser> | undefined) ??
+  mongoose.model<IUser>("User", userSchema);
 
 export default User;

@@ -1,6 +1,12 @@
-import mongoose, { Schema, models } from "mongoose";
+import mongoose, { Model, Schema, Types, models } from "mongoose";
 
-const messageSchema = new Schema(
+export interface IMessage {
+  senderId: Types.ObjectId;
+  recipientId: Types.ObjectId;
+  content: string;
+}
+
+const messageSchema = new Schema<IMessage>(
   {
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     recipientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -12,6 +18,8 @@ const messageSchema = new Schema(
 messageSchema.index({ senderId: 1, recipientId: 1, createdAt: 1 });
 messageSchema.index({ recipientId: 1, senderId: 1, createdAt: 1 });
 
-const Message = models.Message || mongoose.model("Message", messageSchema);
+const Message =
+  (models.Message as Model<IMessage> | undefined) ??
+  mongoose.model<IMessage>("Message", messageSchema);
 
 export default Message;

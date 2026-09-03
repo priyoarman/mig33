@@ -1,7 +1,22 @@
-import mongoose, { Schema } from "mongoose";
-import User from "./user";
+import mongoose, { Model, Schema, Types, models } from "mongoose";
 
-const CommentSchema = new Schema(
+interface IComment {
+  user: Types.ObjectId;
+  username: string;
+  body: string;
+}
+
+export interface IPost {
+  body?: string;
+  images?: string[];
+  authorId: string;
+  authorName: string;
+  authorUsername?: string;
+  likes: Types.ObjectId[];
+  comments: IComment[];
+}
+
+const CommentSchema = new Schema<IComment>(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     username: { type: String, required: true },
@@ -10,7 +25,7 @@ const CommentSchema = new Schema(
   { timestamps: true },
 );
 
-const postsSchema = new Schema(
+const postsSchema = new Schema<IPost>(
   {
     body: {
       type: String,
@@ -60,6 +75,8 @@ postsSchema.virtual("commentsCount").get(function () {
   return this.comments.length;
 });
 
-const Post = mongoose.models.Post || mongoose.model("Post", postsSchema);
+const Post =
+  (models.Post as Model<IPost> | undefined) ??
+  mongoose.model<IPost>("Post", postsSchema);
 
 export default Post;
