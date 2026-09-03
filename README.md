@@ -1,4 +1,4 @@
-mig33 - trying to revive our favorite childhood social app built with TypeScript, Next.JS, NextAuth, MongoDB, and Tailwind CSS. First started developing as part of ReDI School Germany’s Full-stack Development Bootcamp curriculum.
+mig33 - trying to revive our favorite childhood social app built with TypeScript, Next.JS, NextAuth, MongoDB, and Tailwind CSS. First started developing as part of ReDI School Germany’s Full-stack Bootcamp curriculum.
 
 Live Demo: https://mig33.vercel.app/
 
