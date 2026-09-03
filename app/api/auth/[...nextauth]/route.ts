@@ -1,30 +1,39 @@
-import User from "@/models/user";
-import NextAuth from "next-auth/next";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import GithubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
+import GithubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth, { type AuthOptions } from "next-auth";
+
 import connectMongoDB from "@/lib/mongodb";
 import { generateUniqueUsername } from "@/lib/username";
+import User from "@/models/user";
 
-export const authOptions = {
+type AuthOptionsWithTrustHost = AuthOptions & { trustHost: boolean };
+
+export const authOptions: AuthOptionsWithTrustHost = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "credentials",
       credentials: {},
       async authorize(credentials) {
-        const { email, password } = credentials;
+        const { email, password } = (credentials ?? {}) as {
+          email?: string;
+          password?: string;
+        };
+        if (!email || !password) return null;
+
         await connectMongoDB();
         const user = await User.findOne({ email });
-        if (!user) return null;
+        if (!user || !user.password) return null;
+
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
         return user;
@@ -37,7 +46,7 @@ export const authOptions = {
   pages: { signIn: "/login" },
   callbacks: {
     async signIn({ user, account }) {
-      if (account.provider === "google" || account.provider === "github") {
+      if (account?.provider === "google" || account?.provider === "github") {
         await connectMongoDB();
         try {
           const existingUser = await User.findOne({ email: user.email });
@@ -64,9 +73,7 @@ export const authOptions = {
       await connectMongoDB();
       const dbUser = await User.findOne({ email: token.email || user?.email });
 
-      if (!dbUser) {
-        return token;
-      }
+      if (!dbUser) return token;
 
       token.id = dbUser._id.toString();
       token.name = dbUser.name;
@@ -77,10 +84,10 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      session.user.id = token.id;
+      if (token.id) session.user.id = token.id;
+      if (token.username) session.user.username = token.username;
       session.user.name = token.name;
       session.user.email = token.email;
-      session.user.username = token.username;
       session.user.image = token.picture || session.user.image;
       return session;
     },
