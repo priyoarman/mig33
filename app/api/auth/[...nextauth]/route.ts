@@ -36,7 +36,13 @@ export const authOptions: AuthOptionsWithTrustHost = {
 
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
-        return user;
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          image: user.profileImage ?? null,
+        };
       },
     }),
   ],
