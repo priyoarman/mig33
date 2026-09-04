@@ -7,4 +7,6 @@ export interface INotification {
   message: string;
   postId?: Types.ObjectId;
   read: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
