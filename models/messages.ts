@@ -1,10 +1,5 @@
-import mongoose, { Model, Schema, Types, models } from "mongoose";
-
-export interface IMessage {
-  senderId: Types.ObjectId;
-  recipientId: Types.ObjectId;
-  content: string;
-}
+import mongoose, { Model, Schema, models } from "mongoose";
+import type { IMessage } from "@/types/message";
 
 const messageSchema = new Schema<IMessage>(
   {

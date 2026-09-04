@@ -1,25 +1,5 @@
-import mongoose, { Model, Schema, Types, models } from "mongoose";
-
-interface ISearchHistory {
-  query: string;
-  type?: "post" | "user";
-  createdAt: Date;
-}
-
-export interface IUser {
-  name: string;
-  email: string;
-  username: string;
-  password?: string;
-  profileImage?: string | null;
-  coverImage?: string | null;
-  bio?: string;
-  location?: string;
-  website?: string;
-  following: Types.ObjectId[];
-  followers: Types.ObjectId[];
-  searchHistory: ISearchHistory[];
-}
+import mongoose, { Model, Schema, models } from "mongoose";
+import type { IUser } from "@/types/user";
 
 const userSchema = new Schema<IUser>(
   {
