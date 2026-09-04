@@ -1,7 +1,7 @@
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
 import User from "@/models/user";
-import PostCard from "./PostCard";
+import PostsListClient from "./PostsListClient";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 
@@ -12,7 +12,9 @@ export default async function PostsList() {
     .sort({ createdAt: -1 })
     .lean({ virtuals: true });
 
-  const authorIds = Array.from(new Set(rawPosts.map((p) => p.authorId))).filter(Boolean);
+  const authorIds = Array.from(new Set(rawPosts.map((p) => p.authorId))).filter(
+    Boolean,
+  );
   const users = authorIds.length
     ? await User.find({ _id: { $in: authorIds } }).lean()
     : [];
@@ -29,7 +31,7 @@ export default async function PostsList() {
       _id: doc._id.toString(),
       body: doc.body,
       images: doc.images || [],
-      authorId: doc.authorId,
+      authorId: doc.authorId?.toString?.() ?? doc.authorId,
       authorName: doc.authorName,
       authorUsername: doc.authorUsername,
       authorImage: author?.profileImage || null,
@@ -44,10 +46,8 @@ export default async function PostsList() {
   });
 
   return (
-    <div className="z-20 bg-panel py-2 pb-16 sm:pb-0">
-      {posts.map((post) => (
-        <PostCard key={post._id} post={post} />
-      ))}
+    <div className="bg-panel z-20 py-2 pb-16 sm:pb-0">
+      <PostsListClient posts={posts} />
     </div>
   );
 }
