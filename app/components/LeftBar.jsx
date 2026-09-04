@@ -21,20 +21,26 @@ const LeftBar = () => {
     {
       href: "/",
       label: "Home",
-      icon: <GoHomeFill className="text-2xl" />,
-      className: "mt-2",
+      icon: (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+          <GoHomeFill className="text-2xl" />
+        </span>
+      ),
     },
     {
       href: "/search",
       label: "Explore",
-      icon: <MdExplore className="text-2xl" />,
-      className: "",
+      icon: (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+          <MdExplore className="text-2xl" />
+        </span>
+      ),
     },
     {
       href: "/notifications",
       label: "Notifications",
       icon: (
-        <span className="relative">
+        <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
           <FaBell className="text-2xl" />
           {unreadCount > 0 && (
             <span className="absolute -top-3 -right-4 rounded-full bg-red-500 px-1.5 text-[11px] leading-5 font-bold text-white">
@@ -43,14 +49,13 @@ const LeftBar = () => {
           )}
         </span>
       ),
-      className: "",
     },
     {
       href: "/messages",
       label: "Messages",
       icon: (
-        <span className="relative">
-          <FaEnvelope className="text-xl" />
+        <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+          <FaEnvelope className="text-2xl" />
           {messageUnreadCount > 0 && (
             <span className="absolute -top-3 -right-4 rounded-full bg-red-500 px-1.5 text-[11px] leading-5 font-bold text-white">
               +{messageUnreadCount}
@@ -58,20 +63,22 @@ const LeftBar = () => {
           )}
         </span>
       ),
-      className: "",
     },
     {
       href: profileHref,
       label: "Profile",
-      icon: <FaUserCircle className="text-xl" />,
-      className: "pb-4 sm:pb-2",
+      icon: (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+          <FaUserCircle className="text-2xl" />
+        </span>
+      ),
     },
   ];
 
   return (
     <>
       <aside className="reddit-left-column bg-panel border-default z-10 hidden sm:sticky sm:top-0 sm:flex sm:h-screen sm:flex-col sm:items-stretch sm:justify-center sm:border-r-1 sm:py-3 lg:px-3">
-        <div className="bg-panel text-primary flex h-screen w-full flex-col items-start justify-start sm:static sm:inset-auto sm:bottom-auto sm:z-0 sm:flex sm:h-screen sm:w-full sm:flex-col sm:pl-4 sm:gap-2 sm:items-start sm:justify-start sm:shadow-none">
+        <div className="bg-panel text-primary flex h-screen w-full flex-col items-start justify-start sm:static sm:inset-auto sm:bottom-auto sm:z-0 sm:flex sm:h-screen sm:w-full sm:flex-col sm:items-start sm:justify-start sm:gap-2 sm:pl-4 sm:shadow-none">
           <Link
             href={"/"}
             className="hover-panel text-accent hidden sm:flex sm:w-full sm:items-center sm:justify-start sm:space-x-1 sm:rounded-3xl sm:px-1 sm:py-2 sm:pl-5 sm:text-[28px] sm:font-bold sm:transition sm:duration-200"
