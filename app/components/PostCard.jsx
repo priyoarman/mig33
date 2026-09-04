@@ -121,22 +121,18 @@ export default function PostCard({ post }) {
               <div className="flex min-w-0 items-center gap-1.5 text-[15px] leading-none sm:text-[15px]">
                 <Link
                   href={`/profile/${post.authorUsername}`}
-                  className="truncate font-bold text-neutral-800 hover:underline dark:text-neutral-100"
+                  className="text-primary truncate font-bold hover:underline"
                 >
                   {post.authorName}
                 </Link>
                 <Link
                   href={`/profile/${post.authorUsername}`}
-                  className="truncate text-neutral-500 hover:underline dark:text-neutral-400"
+                  className="text-muted truncate hover:underline"
                 >
                   @{post.authorUsername}
                 </Link>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  ·
-                </span>
-                <time className="shrink-0 text-neutral-500 dark:text-neutral-400">
-                  {displayDate}
-                </time>
+                <span className="text-muted">·</span>
+                <time className="text-muted shrink-0">{displayDate}</time>
               </div>
 
               {isOwner && (
@@ -156,7 +152,7 @@ export default function PostCard({ post }) {
             </div>
 
             <div className="mt-1.5">
-              <p className="text-[15px] leading-6 break-words whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">
+              <p className="text-primary text-[15px] leading-6 break-words whitespace-pre-wrap">
                 {post.body}
               </p>
 
@@ -269,8 +265,8 @@ export default function PostCard({ post }) {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-sm text-neutral-500">
-                      <span className="truncate font-bold text-neutral-800 dark:text-neutral-100">
+                    <div className="text-muted flex items-center gap-2 text-sm">
+                      <span className="text-primary truncate font-bold">
                         {post.authorName}
                       </span>
                       <span>@{post.authorUsername}</span>
@@ -280,7 +276,7 @@ export default function PostCard({ post }) {
                   </div>
                 </div>
 
-                <p className="mt-3 text-[15px] leading-6 break-words whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">
+                <p className="text-primary mt-3 text-[15px] leading-6 break-words whitespace-pre-wrap">
                   {post.body}
                 </p>
 
