@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BsSearch } from "react-icons/bs";
-import { FaArrowLeft, FaPaperPlane } from "react-icons/fa6";
+import { FaPaperPlane } from "react-icons/fa6";
 import MiniProfile from "./MiniProfile";
 import { useRealtimeNotifications } from "./RealtimeProvider";
 import Link from "next/link";
@@ -26,7 +26,8 @@ function UserAvatar({ user }) {
 
 const MessagesPage = () => {
   const { data: session, status } = useSession();
-  const { socket, socketError } = useRealtimeNotifications();
+  const { socket, socketError, clearMessageUnread } =
+    useRealtimeNotifications();
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
@@ -48,9 +49,43 @@ const MessagesPage = () => {
 
   useEffect(() => {
     if (status !== "authenticated") return undefined;
+    clearMessageUnread();
     loadConversations();
     const timer = setInterval(loadConversations, 5000);
     return () => clearInterval(timer);
+  }, [clearMessageUnread, status]);
+
+  useEffect(() => {
+    const requestedUserId = new URLSearchParams(window.location.search).get(
+      "userId",
+    );
+    if (status !== "authenticated" || !requestedUserId) return undefined;
+
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    fetch(`/api/messages?userId=${encodeURIComponent(requestedUserId)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Unable to load messages");
+        }
+        if (cancelled) return;
+        setActiveUser(data.user);
+        setMessages(data.messages || []);
+      })
+      .catch((loadError) => {
+        if (cancelled) return;
+        setError(loadError.message);
+        setMessages([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [status]);
 
   useEffect(() => {
@@ -200,18 +235,19 @@ const MessagesPage = () => {
   return (
     <div className="bg-panel text-primary flex min-h-screen w-full flex-col border-r border-gray-200">
       <header className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-        {activeUser && (
-          <button
-            type="button"
-            title="Back to conversations"
-            onClick={() => setActiveUser(null)}
-            className="hover-panel rounded-full p-2"
-          >
-            <FaArrowLeft />
-          </button>
-        )}
         <div className="flex items-center gap-3 py-1">
-          <Link href="/" className="hover-accent rounded-full px-2 text-2xl">
+          <Link
+            href={activeUser ? "/messages" : "/"}
+            aria-label={activeUser ? "Back to conversations" : "Go home"}
+            onClick={() => {
+              if (activeUser) {
+                setActiveUser(null);
+                setMessages([]);
+                setLoading(false);
+              }
+            }}
+            className="hover-accent rounded-full px-2 text-2xl"
+          >
             ←
           </Link>
           <div className="flex-1">
@@ -291,7 +327,7 @@ const MessagesPage = () => {
           )}
         </section>
       ) : (
-        <section className="flex min-h-[calc(100vh-65px)] flex-1 flex-col">
+        <section className="flex min-h-[calc(100vh-65px)] flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
           <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
             <UserAvatar user={activeUser} />
             <span>

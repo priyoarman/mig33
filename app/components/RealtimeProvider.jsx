@@ -7,15 +7,18 @@ import { io } from "socket.io-client";
 const RealtimeContext = createContext({
   notifications: [],
   unreadCount: 0,
+  messageUnreadCount: 0,
   socket: null,
   socketError: "",
   clearUnread: () => {},
+  clearMessageUnread: () => {},
 });
 
 export function RealtimeProvider({ children }) {
   const { data: session, status } = useSession();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
   const [socketError, setSocketError] = useState("");
 
@@ -23,6 +26,7 @@ export function RealtimeProvider({ children }) {
     if (status !== "authenticated" || !session?.user?.id) {
       setSocket(null);
       setSocketError("");
+      setMessageUnreadCount(0);
       return undefined;
     }
 
@@ -78,11 +82,16 @@ export function RealtimeProvider({ children }) {
       setUnreadCount((current) => current + 1);
     });
 
+    socket.on("message", () => {
+      setMessageUnreadCount((current) => current + 1);
+    });
+
     return () => {
       socket.disconnect();
       clearInterval(notificationPoll);
       socket.off("connect_error", handleSocketError);
       socket.off("connect", handleSocketConnect);
+      socket.off("message");
       setSocket((current) => (current === socket ? null : current));
     };
   }, [session?.user?.id, status]);
@@ -92,9 +101,11 @@ export function RealtimeProvider({ children }) {
       value={{
         notifications,
         unreadCount,
+        messageUnreadCount,
         socket,
         socketError,
         clearUnread: () => setUnreadCount(0),
+        clearMessageUnread: () => setMessageUnreadCount(0),
       }}
     >
       {children}

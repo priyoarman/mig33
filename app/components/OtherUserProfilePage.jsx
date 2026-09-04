@@ -161,17 +161,25 @@ const OtherUserProfilePage = ({
                 Log in to follow
               </Link>
             ) : session?.user?.id === user.id ? null : (
-              <button
-                onClick={handleFollowToggle}
-                disabled={pending}
-                className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-white transition text-shadow-xs disabled:cursor-not-allowed disabled:opacity-60 ${
-                  following
-                    ? "bg-cyan-500 hover:bg-cyan-600"
-                    : "bg-gray-500 hover:bg-cyan-500"
-                }`}
-              >
-                {pending ? "..." : following ? "Following" : "Follow"}
-              </button>
+              <>
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={pending}
+                  className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-white transition text-shadow-xs disabled:cursor-not-allowed disabled:opacity-60 ${
+                    following
+                      ? "bg-cyan-500 hover:bg-cyan-600"
+                      : "bg-gray-500 hover:bg-cyan-500"
+                  }`}
+                >
+                  {pending ? "..." : following ? "Following" : "Follow"}
+                </button>
+                <Link
+                  href={`/messages?userId=${encodeURIComponent(user.id)}`}
+                  className="cursor-pointer rounded-full bg-gray-500 px-4 py-2 text-center text-sm font-semibold text-white transition text-shadow-xs hover:bg-cyan-500"
+                >
+                  Message
+                </Link>
+              </>
             )}
           </div>
         </div>
