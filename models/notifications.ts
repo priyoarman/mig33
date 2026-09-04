@@ -1,13 +1,5 @@
-import mongoose, { Model, Schema, Types, models } from "mongoose";
-
-export interface INotification {
-  recipientId: Types.ObjectId;
-  actorId: Types.ObjectId;
-  type: "like" | "comment" | "follow";
-  message: string;
-  postId?: Types.ObjectId;
-  read: boolean;
-}
+import mongoose, { Model, Schema, models } from "mongoose";
+import type { INotification } from "@/types/notification";
 
 const notificationSchema = new Schema<INotification>(
   {

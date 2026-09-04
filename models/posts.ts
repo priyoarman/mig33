@@ -1,20 +1,6 @@
-import mongoose, { Model, Schema, Types, models } from "mongoose";
-
-interface IComment {
-  user: Types.ObjectId;
-  username: string;
-  body: string;
-}
-
-export interface IPost {
-  body?: string;
-  images?: string[];
-  authorId: string;
-  authorName: string;
-  authorUsername?: string;
-  likes: Types.ObjectId[];
-  comments: IComment[];
-}
+import mongoose, { Model, Schema, models } from "mongoose";
+import type { IComment } from "@/types/comment";
+import type { IPost } from "@/types/post";
 
 const CommentSchema = new Schema<IComment>(
   {
