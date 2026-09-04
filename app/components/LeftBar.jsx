@@ -14,7 +14,7 @@ import { useRealtimeNotifications } from "./RealtimeProvider";
 
 const LeftBar = () => {
   const { status } = useSession();
-  const { unreadCount } = useRealtimeNotifications();
+  const { unreadCount, messageUnreadCount } = useRealtimeNotifications();
   const profileHref = status === "authenticated" ? "/profile" : "/login";
 
   const navItems = [
@@ -48,7 +48,16 @@ const LeftBar = () => {
     {
       href: "/messages",
       label: "Messages",
-      icon: <FaEnvelope className="text-xl" />,
+      icon: (
+        <span className="relative">
+          <FaEnvelope className="text-xl" />
+          {messageUnreadCount > 0 && (
+            <span className="absolute -top-3 -right-4 rounded-full bg-red-500 px-1.5 text-[11px] leading-5 font-bold text-white">
+              +{messageUnreadCount}
+            </span>
+          )}
+        </span>
+      ),
       className: "",
     },
     {

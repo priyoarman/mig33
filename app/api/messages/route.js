@@ -34,7 +34,7 @@ export async function GET(request) {
           $group: {
             _id: {
               $cond: [
-                { $eq: ["$senderId", currentUserId] },
+                { $eq: ["$senderId", currentUserObjectId] },
                 "$recipientId",
                 "$senderId",
               ],
