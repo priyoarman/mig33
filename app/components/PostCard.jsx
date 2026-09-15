@@ -172,7 +172,7 @@ export default function PostCard({ post }) {
               </p>
 
               {post.images && post.images.length > 0 && (
-                <div className="mt-3 max-w-[92%] overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="border-default bg-surface mt-3 max-w-[92%] overflow-hidden rounded-2xl border">
                   {post.images.map((image, index) => (
                     <Image
                       key={index}
@@ -237,18 +237,18 @@ export default function PostCard({ post }) {
           onClick={() => setIsCommentsOpen(false)}
         >
           <div
-            className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950"
+            className="border-default bg-panel relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
-              <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
+            <div className="border-default flex items-center justify-between border-b px-4 py-3">
+              <h2 className="text-primary text-lg font-semibold">
                 {`${post.authorName || "User"}'s Post`}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsCommentsOpen(false)}
                 aria-label="Close post view"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
+                className="border-default hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full border transition"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -261,7 +261,7 @@ export default function PostCard({ post }) {
             </div>
 
             <div className="max-h-[calc(90vh-4.5rem)] overflow-y-auto">
-              <div className="border-b border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
+              <div className="border-default bg-surface border-b p-4">
                 <div className="flex items-center gap-3">
                   <div className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
                     {post.authorImage ? (
@@ -296,7 +296,7 @@ export default function PostCard({ post }) {
                 </p>
 
                 {post.images && post.images.length > 0 && (
-                  <div className="mt-3 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+                  <div className="border-default bg-surface mt-3 overflow-hidden rounded-2xl border">
                     {post.images.map((image, index) => (
                       <Image
                         key={index}
@@ -312,7 +312,7 @@ export default function PostCard({ post }) {
                 )}
               </div>
 
-              <div className="bg-white dark:bg-neutral-950">
+              <div className="bg-panel">
                 {commentsLoading && comments.length === 0 ? (
                   <div className="p-4">
                     <CommentRowSkeletonList count={3} />
