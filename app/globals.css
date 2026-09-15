@@ -70,6 +70,26 @@ body,
   }
 }
 
+/* Tablet: right column (search/news/follow) hidden via RightBar's lg:flex class;
+   left column and main column share a 1:3 grid ratio. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .reddit-layout {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    width: 100%;
+  }
+
+  .reddit-left-column {
+    width: 100%;
+  }
+
+  .reddit-main-column {
+    width: 100%;
+    max-width: 100%;
+    justify-self: stretch;
+  }
+}
+
 .reddit-left-column,
 .reddit-right-column {
   max-height: 100vh;

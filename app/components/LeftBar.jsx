@@ -96,15 +96,17 @@ const LeftBar = () => {
             <Link
               key={label}
               href={href}
-              className={`text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:justify-start lg:w-fit lg:px-4 lg:text-xl ${className}`}
+              className={`text-primary hover-accent flex w-full items-center justify-center space-x-2 rounded-3xl px-2 py-2 pl-4 text-2xl font-bold transition duration-200 sm:w-fit sm:justify-start sm:px-3 sm:text-base lg:px-4 lg:text-xl ${className}`}
             >
               {icon}
-              <p className="hidden lg:block">{label}</p>
+              <p className="hidden overflow-hidden text-ellipsis whitespace-nowrap sm:block sm:max-w-[6.5rem] lg:max-w-none">
+                {label}
+              </p>
             </Link>
           ))}
         </div>
 
-        <div className="hidden w-full flex-row justify-between gap-2 rounded-sm px-2 py-2 lg:flex">
+        <div className="hidden w-full flex-row justify-between gap-2 rounded-sm px-2 py-2 sm:flex">
           <MiniProfile />
         </div>
       </aside>
