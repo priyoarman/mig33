@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import SuggestedUserRowSkeletonList from "./skeletons/SuggestedUserRowSkeleton";
 
 const RightBarBottom = () => {
   const router = useRouter();
@@ -78,9 +79,7 @@ const RightBarBottom = () => {
       <h3 className="px-4 pt-2 text-xl font-bold">Who to follow</h3>
 
       {loading ? (
-        <div className="text-muted px-4 pb-4 text-sm">
-          Loading suggestions...
-        </div>
+        <SuggestedUserRowSkeletonList count={3} />
       ) : users.length === 0 ? (
         <div className="text-muted px-4 pb-4 text-sm">
           No profiles to suggest right now.

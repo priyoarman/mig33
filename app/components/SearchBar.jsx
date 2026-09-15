@@ -2,76 +2,112 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { BsSearch } from "react-icons/bs";
 import { MdClose } from "react-icons/md";
 import Link from "next/link";
 import Image from "next/image";
+import SearchUserRowSkeletonList from "./skeletons/SearchUserRowSkeleton";
 
 export default function SearchBar() {
+  const { status } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState({ posts: [], users: [] });
   const [searchHistory, setSearchHistory] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all, posts, users
   const searchRef = useRef(null);
+  const abortRef = useRef(null);
   const router = useRouter();
+
+  const loadHistory = useCallback(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/search/history")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setSearchHistory(data?.searchHistory || []))
+      .catch(() => {});
+  }, [status]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   // Debounced search
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSuggestions([]);
-      setShowDropdown(false);
+      setSuggestions({ posts: [], users: [] });
+      abortRef.current?.abort();
       return;
     }
 
-    setShowDropdown(true);
     const timer = setTimeout(() => {
-      fetchSuggestions();
+      fetchSuggestions(searchQuery);
     }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchSuggestions = useCallback(async () => {
+  const fetchSuggestions = useCallback(async (query) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       setIsSearching(true);
       const [postsRes, usersRes] = await Promise.all([
-        fetch(`/api/search/posts?q=${encodeURIComponent(searchQuery)}&limit=5`),
-        fetch(`/api/search/users?q=${encodeURIComponent(searchQuery)}&limit=5`),
+        fetch(`/api/search/posts?q=${encodeURIComponent(query)}&limit=5`, {
+          signal: controller.signal,
+        }),
+        fetch(`/api/search/users?q=${encodeURIComponent(query)}&limit=5`, {
+          signal: controller.signal,
+        }),
       ]);
 
       const postsData = await postsRes.json();
       const usersData = await usersRes.json();
 
       setSuggestions({
-        posts: postsData.posts || [],
-        users: usersData.users || [],
+        posts: Array.isArray(postsData.posts) ? postsData.posts : [],
+        users: Array.isArray(usersData.users) ? usersData.users : [],
       });
     } catch (error) {
+      if (error.name === "AbortError") return;
       console.error("Search error:", error);
     } finally {
-      setIsSearching(false);
+      if (!controller.signal.aborted) setIsSearching(false);
     }
-  }, [searchQuery]);
+  }, []);
 
   const handleSearch = async (query) => {
-    if (!query.trim()) return;
+    const trimmed = query.trim();
+    if (!trimmed) return;
 
-    // Save to search history
-    try {
-      await fetch("/api/search/history", {
+    // Save to search history (signed-in users only)
+    if (status === "authenticated") {
+      fetch("/api/search/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, type: "all" }),
-      });
-    } catch (error) {
-      console.error("Error saving search history:", error);
+        body: JSON.stringify({ query: trimmed, type: "all" }),
+      })
+        .then(() => loadHistory())
+        .catch((error) => console.error("Error saving search history:", error));
     }
 
     setSearchQuery("");
     setShowDropdown(false);
-    router.push(`/search?q=${encodeURIComponent(query)}`);
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const removeHistoryItem = async (query, event) => {
+    event.stopPropagation();
+    setSearchHistory((current) => current.filter((item) => item.query !== query));
+    try {
+      await fetch(`/api/search/history?query=${encodeURIComponent(query)}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error removing search history item:", error);
+    }
   };
 
   const handleSelectSuggestion = (suggestion, type) => {
@@ -107,13 +143,16 @@ export default function SearchBar() {
           type="text"
           placeholder="Search for posts, users, hashtags..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowDropdown(true);
+          }}
           onKeyPress={(e) => {
             if (e.key === "Enter") {
               handleSearch(searchQuery);
             }
           }}
-          onFocus={() => searchQuery.trim() && setShowDropdown(true)}
+          onFocus={() => setShowDropdown(true)}
           className="ml-3 w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-500 dark:text-neutral-100 dark:placeholder:text-neutral-400"
         />
         {searchQuery && (
@@ -131,11 +170,46 @@ export default function SearchBar() {
       </div>
 
       {/* Search Dropdown */}
-      {showDropdown && (
+      {showDropdown && !searchQuery.trim() && (
+        <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
+          {searchHistory.length === 0 ? (
+            <div className="p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+              No recent searches
+            </div>
+          ) : (
+            <div className="p-2">
+              <div className="px-2 py-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                RECENT SEARCHES
+              </div>
+              {searchHistory.map((item) => (
+                <button
+                  key={item.query}
+                  onClick={() => handleSearch(item.query)}
+                  className="flex w-full items-center justify-between rounded px-2 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                >
+                  <span className="flex items-center gap-2 truncate text-neutral-900 dark:text-neutral-100">
+                    <BsSearch className="shrink-0 text-neutral-400" size={12} />
+                    {item.query}
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => removeHistoryItem(item.query, e)}
+                    className="shrink-0 rounded-full p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                  >
+                    <MdClose size={16} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {showDropdown && searchQuery.trim() && (
         <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
           {isSearching ? (
-            <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">
-              Searching...
+            <div className="p-2">
+              <SearchUserRowSkeletonList count={3} />
             </div>
           ) : (
             <>

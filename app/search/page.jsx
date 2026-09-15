@@ -11,6 +11,8 @@ import Link from "next/link";
 import Image from "next/image";
 import PostCard from "../components/PostCard";
 import { BsSearch } from "react-icons/bs";
+import PostCardSkeletonList from "../components/skeletons/PostCardSkeleton";
+import SearchUserRowSkeletonList from "../components/skeletons/SearchUserRowSkeleton";
 
 const SearchResults = () => {
   const searchParams = useSearchParams();
@@ -22,15 +24,26 @@ const SearchResults = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      setPosts([]);
+      setUsers([]);
+      setIsLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
 
     const fetchResults = async () => {
       setIsLoading(true);
       setError("");
       try {
         const [postsRes, usersRes] = await Promise.all([
-          fetch(`/api/search/posts?q=${encodeURIComponent(query)}`),
-          fetch(`/api/search/users?q=${encodeURIComponent(query)}`),
+          fetch(`/api/search/posts?q=${encodeURIComponent(query)}`, {
+            signal: controller.signal,
+          }),
+          fetch(`/api/search/users?q=${encodeURIComponent(query)}`, {
+            signal: controller.signal,
+          }),
         ]);
 
         const postsData = await postsRes.json();
@@ -40,24 +53,26 @@ const SearchResults = () => {
           console.error("Posts error:", postsData);
           setPosts([]);
         } else {
-          setPosts(postsData.posts || ["No posts found"]);
+          setPosts(Array.isArray(postsData.posts) ? postsData.posts : []);
         }
 
         if (!usersRes.ok) {
           console.error("Users error:", usersData);
           setUsers([]);
         } else {
-          setUsers(usersData.users || ["No users found"]);
+          setUsers(Array.isArray(usersData.users) ? usersData.users : []);
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error("Search error:", err);
         setError("Failed to fetch search results");
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchResults();
+    return () => controller.abort();
   }, [query]);
 
   const filteredPosts =
@@ -120,10 +135,9 @@ const SearchResults = () => {
         {/* Results */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex h-96 items-center justify-center">
-              <div className="animate-spin">
-                <BsSearch size={32} className="text-secondary" />
-              </div>
+            <div>
+              <PostCardSkeletonList count={3} withImage />
+              <SearchUserRowSkeletonList count={3} />
             </div>
           ) : (
             <>

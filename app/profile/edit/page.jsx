@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import EditProfileFormSkeleton from "../../components/skeletons/EditProfileFormSkeleton";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -114,11 +115,7 @@ export default function EditProfilePage() {
   };
 
   if (status === "loading" || initialLoading) {
-    return (
-      <div className="bg-panel text-primary flex min-h-screen items-center justify-center">
-        Loading profile editor...
-      </div>
-    );
+    return <EditProfileFormSkeleton />;
   }
 
   if (status !== "authenticated") {

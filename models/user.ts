@@ -46,7 +46,7 @@ const userSchema = new Schema<IUser>(
         query: String,
         type: {
           type: String,
-          enum: ["post", "user"],
+          enum: ["post", "user", "all"],
         },
         createdAt: {
           type: Date,

@@ -50,10 +50,11 @@ export async function POST(request) {
     }
 
     const { query, type } = await request.json();
+    const trimmedQuery = typeof query === "string" ? query.trim() : "";
 
-    if (!query || !type) {
+    if (!trimmedQuery || !["post", "user", "all"].includes(type)) {
       return NextResponse.json(
-        { error: "Query and type are required" },
+        { error: "A valid query and type are required" },
         { status: 400 }
       );
     }
@@ -74,13 +75,13 @@ export async function POST(request) {
 
     // Remove duplicate if it exists (to move it to the top)
     user.searchHistory = user.searchHistory.filter(
-      (item) => item.query !== query
+      (item) => item.query.toLowerCase() !== trimmedQuery.toLowerCase()
     );
 
     // Add new search to the beginning
     user.searchHistory.unshift({
-      query,
-      type, // 'post' or 'user'
+      query: trimmedQuery,
+      type, // 'post', 'user', or 'all'
       createdAt: new Date(),
     });
 
@@ -128,7 +129,7 @@ export async function DELETE(request) {
 
     // Remove the search from history
     user.searchHistory = user.searchHistory.filter(
-      (item) => item.query !== query
+      (item) => item.query.toLowerCase() !== (query || "").toLowerCase()
     );
 
     await user.save();

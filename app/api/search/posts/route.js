@@ -1,15 +1,16 @@
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
+import { escapeRegExp } from "@/lib/search";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
     await connectMongoDB();
-    
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
+    const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit")) || 10));
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
@@ -20,9 +21,10 @@ export async function GET(request) {
 
     const skip = (page - 1) * limit;
 
-    // Create regex patterns for search
-    const searchRegex = new RegExp(query.trim(), "i");
-    const hashtagRegex = new RegExp(`#${query.trim()}`, "i");
+    // Create regex patterns for search (escaped to avoid ReDoS / invalid patterns from user input)
+    const safeQuery = escapeRegExp(query.trim());
+    const searchRegex = new RegExp(safeQuery, "i");
+    const hashtagRegex = new RegExp(`#${safeQuery}`, "i");
 
     // Search in post body and hashtags
     const posts = await Post.find({

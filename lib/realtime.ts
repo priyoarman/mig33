@@ -6,6 +6,7 @@ type NotificationType = INotification["type"];
 interface NotificationActor {
   name: string;
   username?: string | null;
+  profileImage?: string | null;
 }
 
 interface RealtimeNotificationInput {
@@ -13,6 +14,7 @@ interface RealtimeNotificationInput {
   message: string;
   actorId: string;
   postId?: string;
+  postSnippet?: string;
   actor?: NotificationActor;
   id?: string;
   createdAt?: string;
@@ -28,15 +30,22 @@ declare global {
   } | undefined;
 }
 
+export function emitToUser(
+  userId: string | { toString(): string } | null | undefined,
+  eventName: string,
+  payload: Record<string, unknown>,
+): void {
+  const io = globalThis.__redilinkIo;
+  const room = userId?.toString?.();
+  if (!io || !room) return;
+  io.to(`user:${room}`).emit(eventName, payload);
+}
+
 export function emitNotification(
   recipientId: string | { toString(): string } | null | undefined,
   notification: RealtimeNotificationInput,
 ): void {
-  const io = globalThis.__redilinkIo;
-  const recipientRoom = recipientId?.toString?.();
-  if (!io || !recipientRoom) return;
-
-  io.to(`user:${recipientRoom}`).emit("notification", {
+  emitToUser(recipientId, "notification", {
     id: notification.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     createdAt: notification.createdAt ?? new Date().toISOString(),
     ...notification,

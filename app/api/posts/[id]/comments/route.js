@@ -5,6 +5,7 @@ import User from "@/models/user";
 import connectMongoDB from "@/lib/mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { createAndEmitNotification } from "@/lib/realtime";
+import { snippet } from "@/lib/text";
 
 export async function GET(request, { params }) {
   await connectMongoDB();
@@ -81,8 +82,10 @@ export async function POST(request, { params }) {
         actor: {
           name: session.user.name || "Someone",
           username: session.user.username,
+          profileImage: user?.profileImage || null,
         },
         postId: post._id.toString(),
+        postSnippet: snippet(post.body),
       });
     }
 
