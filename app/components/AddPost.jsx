@@ -213,30 +213,30 @@ export default function AddPost() {
       {/* GIF Search Modal */}
       {gifModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/10 px-4 pt-16 backdrop-blur-[1px]">
-          <div className="w-full max-w-[560px] overflow-hidden rounded-[22px] border border-neutral-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] dark:border-neutral-700 dark:bg-neutral-950">
-            <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="border-default bg-panel w-full max-w-[560px] overflow-hidden rounded-[22px] border shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
+            <div className="border-default bg-surface flex items-center justify-between border-b px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-600">
                   <MdOutlineGifBox className="text-lg" />
                 </div>
-                <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                <h2 className="text-primary text-sm font-semibold">
                   Search GIFs
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setGifModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xl text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-800 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                className="hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full text-xl transition"
               >
                 &times;
               </button>
             </div>
 
             <div className="p-3">
-              <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900">
+              <div className="border-default bg-surface flex items-center gap-2 rounded-xl border px-3 py-2">
                 <svg
                   viewBox="0 0 24 24"
-                  className="h-4 w-4 fill-none stroke-current text-neutral-500"
+                  className="text-muted h-4 w-4 fill-none stroke-current"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -251,7 +251,7 @@ export default function AddPost() {
                   value={gifSearchQuery}
                   onChange={(e) => setGifSearchQuery(e.target.value)}
                   placeholder="Search Giphy GIFs..."
-                  className="w-full border-0 bg-transparent text-sm text-neutral-800 outline-none placeholder:text-neutral-500 dark:text-neutral-100"
+                  className="text-primary w-full border-0 bg-transparent text-base outline-none placeholder:text-[color:var(--muted)] sm:text-sm"
                 />
               </div>
             </div>
@@ -259,11 +259,11 @@ export default function AddPost() {
             <div className="max-h-[58vh] overflow-y-auto px-3 pb-3">
               {isGifSearching ? (
                 <div className="flex h-36 items-center justify-center">
-                  <p className="text-sm text-neutral-500">Searching...</p>
+                  <p className="text-muted text-sm">Searching...</p>
                 </div>
               ) : gifResults.length === 0 ? (
                 <div className="flex h-36 items-center justify-center">
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-muted text-sm">
                     {gifSearchQuery
                       ? "No GIFs found"
                       : "Search for GIFs to get started"}
@@ -276,7 +276,7 @@ export default function AddPost() {
                       key={idx}
                       type="button"
                       onClick={() => selectGif(item.url, item.preview)}
-                      className="group relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 transition hover:opacity-90 dark:border-neutral-700 dark:bg-neutral-900"
+                      className="border-default bg-surface group relative overflow-hidden rounded-xl border transition hover:opacity-90"
                     >
                       <img
                         src={item.preview}
