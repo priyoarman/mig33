@@ -33,6 +33,9 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
     content: { type: String, required: true, trim: true, maxlength: 2000 },
+    clientId: { type: String },
+    read: { type: Boolean, default: false },
+    readAt: { type: Date },
   },
   { timestamps: true },
 );
@@ -105,6 +108,10 @@ app.prepare().then(() => {
     socket.on("send_message", async (payload, acknowledge) => {
       const recipientId = payload?.recipientId?.toString();
       const content = payload?.content?.trim();
+      const clientId =
+        typeof payload?.clientId === "string"
+          ? payload.clientId.slice(0, 100)
+          : undefined;
       if (
         !userId ||
         !recipientId ||
@@ -122,12 +129,15 @@ app.prepare().then(() => {
           senderId: userId,
           recipientId,
           content,
+          clientId,
         });
         const serialized = {
           _id: message._id.toString(),
           senderId: userId,
           recipientId,
           content: message.content,
+          clientId: message.clientId,
+          read: false,
           createdAt: message.createdAt.toISOString(),
         };
         io.to(`user:${recipientId}`).emit("message", serialized);

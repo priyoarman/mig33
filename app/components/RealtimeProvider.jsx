@@ -1,22 +1,24 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { io } from "socket.io-client";
 
 const RealtimeContext = createContext({
   notifications: [],
+  notificationsLoading: true,
   unreadCount: 0,
   messageUnreadCount: 0,
   socket: null,
   socketError: "",
   clearUnread: () => {},
-  clearMessageUnread: () => {},
+  markConversationRead: () => {},
 });
 
 export function RealtimeProvider({ children }) {
   const { data: session, status } = useSession();
   const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
@@ -27,6 +29,7 @@ export function RealtimeProvider({ children }) {
       setSocket(null);
       setSocketError("");
       setMessageUnreadCount(0);
+      if (status !== "loading") setNotificationsLoading(false);
       return undefined;
     }
 
@@ -36,6 +39,15 @@ export function RealtimeProvider({ children }) {
         if (!data) return;
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
+      })
+      .catch(() => {})
+      .finally(() => setNotificationsLoading(false));
+
+    fetch("/api/messages")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setMessageUnreadCount(data.unreadTotal || 0);
       })
       .catch(() => {});
 
@@ -57,10 +69,15 @@ export function RealtimeProvider({ children }) {
         .then((data) => {
           if (!data) return;
           setNotifications((current) => {
-            const merged = [...(data.notifications || []), ...current];
+            // Freshly-fetched notifications are authoritative; they must be
+            // merged in last so they overwrite any stale client-held copy
+            // of the same id in the Map.
+            const merged = [...current, ...(data.notifications || [])];
             return [
               ...new Map(merged.map((item) => [item.id, item])).values(),
-            ].slice(0, 50);
+            ]
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .slice(0, 50);
           });
           setUnreadCount(data.unreadCount || 0);
         })
@@ -70,11 +87,14 @@ export function RealtimeProvider({ children }) {
     if (!socket) {
       return () => clearInterval(notificationPoll);
     }
-    const handleSocketError = (error) => {
-      setSocketError("");
+    const handleSocketError = () => {
+      setSocketError(
+        "Live updates are unavailable right now. Trying to reconnect...",
+      );
     };
     const handleSocketConnect = () => setSocketError("");
     socket.on("connect_error", handleSocketError);
+    socket.on("disconnect", handleSocketError);
     socket.on("connect", handleSocketConnect);
 
     socket.on("notification", (notification) => {
@@ -90,22 +110,42 @@ export function RealtimeProvider({ children }) {
       socket.disconnect();
       clearInterval(notificationPoll);
       socket.off("connect_error", handleSocketError);
+      socket.off("disconnect", handleSocketError);
       socket.off("connect", handleSocketConnect);
       socket.off("message");
       setSocket((current) => (current === socket ? null : current));
     };
   }, [session?.user?.id, status]);
 
+  const markConversationRead = useCallback((otherUserId) => {
+    if (!otherUserId) return Promise.resolve(0);
+    return fetch("/api/messages", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: otherUserId }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        const marked = data?.markedCount || 0;
+        if (marked > 0) {
+          setMessageUnreadCount((current) => Math.max(0, current - marked));
+        }
+        return marked;
+      })
+      .catch(() => 0);
+  }, []);
+
   return (
     <RealtimeContext.Provider
       value={{
         notifications,
+        notificationsLoading,
         unreadCount,
         messageUnreadCount,
         socket,
         socketError,
         clearUnread: () => setUnreadCount(0),
-        clearMessageUnread: () => setMessageUnreadCount(0),
+        markConversationRead,
       }}
     >
       {children}

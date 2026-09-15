@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BsSearch } from "react-icons/bs";
+import { BsSearch, BsCheck, BsCheckAll } from "react-icons/bs";
 import { FaPaperPlane } from "react-icons/fa6";
-import MiniProfile from "./MiniProfile";
 import { useRealtimeNotifications } from "./RealtimeProvider";
 import Link from "next/link";
+import ConversationRowSkeletonList, {
+  MessageBubbleSkeletonList,
+} from "./skeletons/ConversationRowSkeleton";
+
+const PAGE_SIZE = 30;
 
 function UserAvatar({ user }) {
   return user?.profileImage ? (
@@ -24,77 +28,168 @@ function UserAvatar({ user }) {
   );
 }
 
+const genClientId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+// Merges freshly-received messages (from a socket event, an ack, or a poll)
+// into the existing list without discarding anything: replaces a message by
+// real _id if we already have it (e.g. a read-status update), replaces a
+// pending optimistic placeholder by clientId once the server confirms it,
+// and otherwise appends. This keeps previously-loaded older pages intact
+// instead of the old behavior of clobbering the whole array on every poll.
+function mergeMessages(incoming, previous) {
+  let next = previous;
+  for (const serverMsg of incoming) {
+    const byId = next.findIndex((m) => m._id === serverMsg._id);
+    if (byId !== -1) {
+      next = next.map((m, i) => (i === byId ? { ...serverMsg } : m));
+      continue;
+    }
+    const byClientId = serverMsg.clientId
+      ? next.findIndex((m) => m.clientId === serverMsg.clientId)
+      : -1;
+    if (byClientId !== -1) {
+      next = next.map((m, i) => (i === byClientId ? { ...serverMsg } : m));
+      continue;
+    }
+    next = [...next, serverMsg];
+  }
+  return next.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+}
+
 const MessagesPage = () => {
   const { data: session, status } = useSession();
-  const { socket, socketError, clearMessageUnread } =
+  const { socket, socketError, markConversationRead } =
     useRealtimeNotifications();
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [incomingNotice, setIncomingNotice] = useState("");
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const conversationRequestRef = useRef(0);
+  const shouldScrollToBottomRef = useRef(true);
+  const prevScrollHeightRef = useRef(null);
 
   const loadConversations = () => {
     fetch("/api/messages")
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setConversations(data?.conversations || []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setConversationsLoading(false));
   };
 
   useEffect(() => {
     if (status !== "authenticated") return undefined;
-    clearMessageUnread();
     loadConversations();
     const timer = setInterval(loadConversations, 5000);
     return () => clearInterval(timer);
-  }, [clearMessageUnread, status]);
+  }, [status]);
+
+  const loadConversation = async (userId) => {
+    const requestId = ++conversationRequestRef.current;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/messages?userId=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}`,
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load messages");
+      // A newer conversation open/switch happened while this was in flight;
+      // discard this stale response instead of overwriting the newer state.
+      if (requestId !== conversationRequestRef.current) return;
+      shouldScrollToBottomRef.current = true;
+      setActiveUser(data.user);
+      setMessages(data.messages || []);
+      setHasMoreOlder(!!data.hasMore);
+      markConversationRead(userId);
+    } catch (loadError) {
+      if (requestId !== conversationRequestRef.current) return;
+      setError(loadError.message);
+      setMessages([]);
+      setHasMoreOlder(false);
+    } finally {
+      if (requestId === conversationRequestRef.current) setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const requestedUserId = new URLSearchParams(window.location.search).get(
       "userId",
     );
-    if (status !== "authenticated" || !requestedUserId) return undefined;
-
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    fetch(`/api/messages?userId=${encodeURIComponent(requestedUserId)}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Unable to load messages");
-        }
-        if (cancelled) return;
-        setActiveUser(data.user);
-        setMessages(data.messages || []);
-      })
-      .catch((loadError) => {
-        if (cancelled) return;
-        setError(loadError.message);
-        setMessages([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    if (status !== "authenticated" || !requestedUserId) return;
+    loadConversation(requestedUserId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  const loadOlderMessages = async () => {
+    if (!activeUser || loadingOlder || !hasMoreOlder || !messages.length) return;
+    setLoadingOlder(true);
+    const oldest = messages[0];
+    const container = scrollContainerRef.current;
+    prevScrollHeightRef.current = container ? container.scrollHeight : null;
+    try {
+      const response = await fetch(
+        `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}&before=${encodeURIComponent(oldest.createdAt)}`,
+      );
+      if (!response.ok) return;
+      const data = await response.json();
+      shouldScrollToBottomRef.current = false;
+      setMessages((current) => [...(data.messages || []), ...current]);
+      setHasMoreOlder(!!data.hasMore);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (container.scrollTop < 60 && hasMoreOlder && !loadingOlder) {
+      loadOlderMessages();
+    }
+  };
+
+  // Keep the scroll position stable after prepending older messages instead
+  // of jumping the viewport, and only auto-scroll to bottom for genuinely
+  // new messages (sent, received, or on first open).
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (prevScrollHeightRef.current != null) {
+      const delta = container.scrollHeight - prevScrollHeightRef.current;
+      container.scrollTop = delta;
+      prevScrollHeightRef.current = null;
+      return;
+    }
+    if (shouldScrollToBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      shouldScrollToBottomRef.current = false;
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (!query.trim()) {
       setUsers([]);
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch(`/api/search/users?q=${encodeURIComponent(query.trim())}&limit=8`)
+      fetch(`/api/search/users?q=${encodeURIComponent(query.trim())}&limit=8`, {
+        signal: controller.signal,
+      })
         .then((response) => response.json())
         .then((data) =>
           setUsers(
@@ -103,9 +198,14 @@ const MessagesPage = () => {
             ),
           ),
         )
-        .catch(() => setUsers([]));
+        .catch((err) => {
+          if (err.name !== "AbortError") setUsers([]);
+        });
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query, session?.user?.id]);
 
   useEffect(() => {
@@ -116,54 +216,50 @@ const MessagesPage = () => {
         message.senderId === activeUser._id &&
         message.recipientId === session?.user?.id
       ) {
-        setMessages((current) =>
-          current.some((item) => item._id === message._id)
-            ? current
-            : [...current, message],
-        );
+        shouldScrollToBottomRef.current = true;
+        setMessages((current) => mergeMessages([message], current));
+        markConversationRead(activeUser._id);
       } else if (message.recipientId === session?.user?.id) {
         setIncomingNotice("New message received");
         loadConversations();
       }
     };
+    const handleReadReceipt = ({ byUserId }) => {
+      if (!activeUser || byUserId !== activeUser._id) return;
+      setMessages((current) =>
+        current.map((m) =>
+          m.senderId === session?.user?.id ? { ...m, read: true } : m,
+        ),
+      );
+    };
     socket.on("message", receiveMessage);
-    return () => socket.off("message", receiveMessage);
-  }, [activeUser, session?.user?.id, socket]);
+    socket.on("messages_read", handleReadReceipt);
+    return () => {
+      socket.off("message", receiveMessage);
+      socket.off("messages_read", handleReadReceipt);
+    };
+  }, [activeUser, session?.user?.id, socket, markConversationRead]);
 
+  // Fallback for when the socket is unavailable: periodically pull the
+  // latest page and merge it in without discarding older loaded pages.
   useEffect(() => {
-    if (!activeUser) return undefined;
+    if (!activeUser || (socket && socket.connected)) return undefined;
     const timer = setInterval(async () => {
-      const response = await fetch(`/api/messages?userId=${activeUser._id}`);
+      const response = await fetch(
+        `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}`,
+      );
       if (!response.ok) return;
       const data = await response.json();
-      setMessages(data.messages || []);
+      setMessages((current) => mergeMessages(data.messages || [], current));
     }, 5000);
     return () => clearInterval(timer);
-  }, [activeUser]);
+  }, [activeUser, socket, socket?.connected]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const openConversation = async (user) => {
-    setActiveUser(user);
+  const openConversation = (user) => {
     setIncomingNotice("");
     setQuery("");
     setUsers([]);
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/messages?userId=${user._id}`);
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.error || "Unable to load messages");
-      setMessages(data.messages || []);
-    } catch (loadError) {
-      setError(loadError.message);
-      setMessages([]);
-    } finally {
-      setLoading(false);
-    }
+    loadConversation(user._id);
   };
 
   const sendMessage = async (event) => {
@@ -174,55 +270,112 @@ const MessagesPage = () => {
     }
     setSending(true);
     setError("");
+    const clientId = genClientId();
+    const optimisticMessage = {
+      _id: `pending-${clientId}`,
+      clientId,
+      senderId: session.user.id,
+      recipientId: activeUser._id,
+      content: text,
+      read: false,
+      createdAt: new Date().toISOString(),
+      status: "pending",
+    };
+    shouldScrollToBottomRef.current = true;
+    setMessages((current) => [...current, optimisticMessage]);
+    setContent("");
+
+    const markFailed = (errorMessage) => {
+      setMessages((current) =>
+        current.map((m) =>
+          m.clientId === clientId
+            ? { ...m, status: "failed", error: errorMessage }
+            : m,
+        ),
+      );
+      setError(errorMessage);
+    };
+
+    const markSent = (realMessage) => {
+      setMessages((current) => mergeMessages([realMessage], current));
+      loadConversations();
+    };
+
     if (!socket || !socket.connected) {
       try {
         const response = await fetch("/api/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ recipientId: activeUser._id, content: text }),
+          body: JSON.stringify({
+            recipientId: activeUser._id,
+            content: text,
+            clientId,
+          }),
         });
         const result = await response.json();
         if (!response.ok || !result.message) {
           throw new Error(result.error || "Message could not be sent.");
         }
-        setMessages((current) => [...current, result.message]);
-        setContent("");
-        loadConversations();
+        markSent(result.message);
       } catch (sendError) {
-        setError(sendError.message);
+        markFailed(sendError.message);
       } finally {
         setSending(false);
       }
       return;
     }
-    let acknowledged = false;
-    const timeout = setTimeout(() => {
-      if (!acknowledged) {
-        setSending(false);
-        setError("Message could not be sent. Please try again.");
+
+    let settled = false;
+    const timeout = setTimeout(async () => {
+      if (settled) return;
+      setSending(false);
+      // The ack may simply be late rather than lost, and the message was
+      // already persisted server-side before the ack is sent — reconcile
+      // against the server instead of assuming failure and inviting a
+      // duplicate resend.
+      try {
+        const response = await fetch(
+          `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const confirmed = (data.messages || []).find(
+            (m) => m.clientId === clientId,
+          );
+          if (confirmed) {
+            settled = true;
+            markSent(confirmed);
+            return;
+          }
+        }
+      } catch {
+        // fall through to marking as failed
       }
+      markFailed("Message could not be confirmed. Tap to retry.");
     }, 10000);
+
     socket.emit(
       "send_message",
-      { recipientId: activeUser._id, content: text },
+      { recipientId: activeUser._id, content: text, clientId },
       (result) => {
-        acknowledged = true;
+        if (settled) return;
+        settled = true;
         clearTimeout(timeout);
         setSending(false);
         if (!result?.message || result.error) {
-          setError(
-            result?.error || "Message could not be sent. Please try again.",
-          );
+          markFailed(result?.error || "Message could not be sent. Please try again.");
           return;
         }
-        setMessages((current) =>
-          current.some((item) => item._id === result.message._id)
-            ? current
-            : [...current, result.message],
-        );
-        setContent("");
+        markSent(result.message);
       },
     );
+  };
+
+  const retryMessage = (failedMessage) => {
+    setMessages((current) =>
+      current.filter((m) => m.clientId !== failedMessage.clientId),
+    );
+    setContent(failedMessage.content);
   };
 
   if (status !== "authenticated")
@@ -272,6 +425,7 @@ const MessagesPage = () => {
             />
           </label>
           <div className="mt-4 divide-y divide-gray-200">
+            {conversationsLoading && <ConversationRowSkeletonList count={6} />}
             {incomingNotice && (
               <button
                 type="button"
@@ -281,7 +435,7 @@ const MessagesPage = () => {
                 {incomingNotice}
               </button>
             )}
-            {conversations.map(({ user, latestMessage }) => (
+            {conversations.map(({ user, latestMessage, unreadCount }) => (
               <button
                 key={user._id}
                 type="button"
@@ -295,8 +449,15 @@ const MessagesPage = () => {
                     {latestMessage.content}
                   </span>
                 </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(latestMessage.createdAt).toLocaleDateString()}
+                <span className="flex flex-col items-end gap-1">
+                  <span className="text-xs text-gray-400">
+                    {new Date(latestMessage.createdAt).toLocaleDateString()}
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="bg-accent text-on-accent rounded-full px-1.5 text-[11px] leading-5 font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
                 </span>
               </button>
             ))}
@@ -317,12 +478,12 @@ const MessagesPage = () => {
               </button>
             ))}
           </div>
-          {!query && !conversations.length && (
+          {!conversationsLoading && !query && !conversations.length && (
             <p className="mt-16 text-center text-gray-500">
               Search for a user to start a conversation.
             </p>
           )}
-          {query && !users.length && (
+          {!conversationsLoading && query && !users.length && (
             <p className="mt-8 text-center text-gray-500">No users found.</p>
           )}
         </section>
@@ -337,10 +498,17 @@ const MessagesPage = () => {
               </span>
             </span>
           </div>
-          <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-5">
-            {loading && (
-              <p className="text-center text-gray-500">Loading messages...</p>
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-5"
+          >
+            {loadingOlder && (
+              <p className="text-center text-xs text-gray-400">
+                Loading older messages...
+              </p>
             )}
+            {loading && <MessageBubbleSkeletonList count={6} />}
             {!loading && !messages.length && (
               <p className="m-auto text-center text-gray-500">
                 No messages yet. Say hello.
@@ -348,16 +516,35 @@ const MessagesPage = () => {
             )}
             {messages.map((message) => {
               const mine = message.senderId === session.user.id;
+              const isFailed = message.status === "failed";
+              const isPending = message.status === "pending";
               return (
                 <div
                   key={message._id}
-                  className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                  className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
                 >
                   <p
-                    className={`${mine ? "bg-accent text-on-accent" : "bg-input text-primary"} max-w-[78%] rounded-2xl px-4 py-2 text-base`}
+                    onClick={() => isFailed && retryMessage(message)}
+                    className={`${mine ? "bg-accent text-on-accent" : "bg-input text-primary"} max-w-[78%] rounded-2xl px-4 py-2 text-base ${isPending ? "opacity-60" : ""} ${isFailed ? "cursor-pointer border-2 border-red-400 opacity-80" : ""}`}
                   >
                     {message.content}
                   </p>
+                  {mine && !isFailed && (
+                    <span className="mt-0.5 flex items-center gap-1 px-1 text-xs text-gray-400">
+                      {isPending ? (
+                        "Sending..."
+                      ) : message.read ? (
+                        <BsCheckAll className="text-blue-500" size={14} />
+                      ) : (
+                        <BsCheck size={14} />
+                      )}
+                    </span>
+                  )}
+                  {isFailed && (
+                    <span className="mt-0.5 px-1 text-xs text-red-500">
+                      {message.error || "Failed to send"} · Tap to retry
+                    </span>
+                  )}
                 </div>
               );
             })}

@@ -14,6 +14,7 @@ import {
   AiOutlineEye,
 } from "react-icons/ai";
 import Image from "next/image";
+import CommentRowSkeletonList from "./skeletons/CommentRowSkeleton";
 
 export default function PostCard({ post }) {
   const { data: session } = useSession();
@@ -21,9 +22,11 @@ export default function PostCard({ post }) {
 
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [liked, setLiked] = useState(post.likedByMe);
+  const [isLiking, setIsLiking] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount ?? 0);
   const [comments, setComments] = useState(post.comments || []);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   useEffect(() => {
     setComments(post.comments || []);
@@ -39,6 +42,7 @@ export default function PostCard({ post }) {
     if (!isCommentsOpen || !post?._id) return;
 
     const loadComments = async () => {
+      setCommentsLoading(true);
       try {
         const res = await fetch(`/api/posts/${post._id}/comments`);
         if (!res.ok) return;
@@ -46,6 +50,8 @@ export default function PostCard({ post }) {
         setComments(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to load comments:", error);
+      } finally {
+        setCommentsLoading(false);
       }
     };
 
@@ -79,20 +85,29 @@ export default function PostCard({ post }) {
       alert("Please log in to like posts.");
       return;
     }
+    if (isLiking) return;
 
+    setIsLiking(true);
     setLiked(!liked);
     setLikesCount((c) => c + (liked ? -1 : 1));
 
-    const res = await fetch(`/api/posts/${post._id}/like`, {
-      method: "POST",
-    });
-    if (res.ok) {
-      const { liked: newLiked, likesCount: newCount } = await res.json();
-      setLiked(newLiked);
-      setLikesCount(newCount);
-    } else {
+    try {
+      const res = await fetch(`/api/posts/${post._id}/like`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const { liked: newLiked, likesCount: newCount } = await res.json();
+        setLiked(newLiked);
+        setLikesCount(newCount);
+      } else {
+        setLiked(liked);
+        setLikesCount((c) => c + (liked ? 1 : -1));
+      }
+    } catch {
       setLiked(liked);
       setLikesCount((c) => c + (liked ? 1 : -1));
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -298,17 +313,23 @@ export default function PostCard({ post }) {
               </div>
 
               <div className="bg-white dark:bg-neutral-950">
-                <CommentsSection
-                  postId={post._id}
-                  initialComments={comments}
-                  onCommentAdded={(newComment) => {
-                    setComments((prev) => [...prev, newComment]);
-                    setCommentsCount((count) => count + 1);
-                  }}
-                  onCommentDeleted={() => {
-                    setCommentsCount((count) => Math.max(0, count - 1));
-                  }}
-                />
+                {commentsLoading && comments.length === 0 ? (
+                  <div className="p-4">
+                    <CommentRowSkeletonList count={3} />
+                  </div>
+                ) : (
+                  <CommentsSection
+                    postId={post._id}
+                    initialComments={comments}
+                    onCommentAdded={(newComment) => {
+                      setComments((prev) => [...prev, newComment]);
+                      setCommentsCount((count) => count + 1);
+                    }}
+                    onCommentDeleted={() => {
+                      setCommentsCount((count) => Math.max(0, count - 1));
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>

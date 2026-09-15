@@ -54,6 +54,7 @@ export async function POST(request, { params }) {
         actor: {
           name: currentUser.name,
           username: currentUser.username,
+          profileImage: currentUser.profileImage || null,
         },
       });
     }

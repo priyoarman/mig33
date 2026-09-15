@@ -1,6 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import Notification from "@/models/notifications";
+import { snippet } from "@/lib/text";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -15,7 +16,8 @@ export async function GET() {
     Notification.find({ recipientId: session.user.id })
       .sort({ createdAt: -1 })
       .limit(50)
-      .populate("actorId", "name username")
+      .populate("actorId", "name username profileImage")
+      .populate("postId", "body")
       .lean(),
     Notification.countDocuments({
       recipientId: session.user.id,
@@ -33,9 +35,13 @@ export async function GET() {
         ? {
             name: notification.actorId.name,
             username: notification.actorId.username,
+            profileImage: notification.actorId.profileImage || null,
           }
         : { name: "Someone" },
-      postId: notification.postId?.toString() || null,
+      postId: notification.postId?._id?.toString() || null,
+      postSnippet: notification.postId?.body
+        ? snippet(notification.postId.body)
+        : null,
       createdAt: notification.createdAt.toISOString(),
     })),
   });
