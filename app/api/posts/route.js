@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import cloudinary from "@/lib/cloudinary";
+import { getFeedPage } from "@/lib/posts";
 
 const uploadToCloudinary = (file) => {
   return new Promise((resolve, reject) => {
@@ -21,6 +22,29 @@ const uploadToCloudinary = (file) => {
       stream.end(Buffer.from(buffer))
     })
   })
+}
+
+export async function GET(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(request.url);
+    const before = searchParams.get("before");
+    const limitParam = parseInt(searchParams.get("limit"), 10);
+
+    const { posts, hasMore, nextCursor } = await getFeedPage({
+      before,
+      limit: Number.isNaN(limitParam) ? undefined : limitParam,
+      currentUserId: session?.user?.id,
+    });
+
+    return NextResponse.json({ posts, hasMore, nextCursor });
+  } catch (error) {
+    console.error("Get posts error:", error);
+    return NextResponse.json(
+      { error: "Failed to load posts" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request) {

@@ -1,28 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PostCard from "./PostCard";
 
-const POSTS_PER_PAGE = 7;
+export default function PostsListClient({
+  initialPosts,
+  initialHasMore,
+  initialCursor,
+}) {
+  const [posts, setPosts] = useState(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [cursor, setCursor] = useState(initialCursor);
+  const [loading, setLoading] = useState(false);
+  const sentinelRef = useRef(null);
 
-export default function PostsListClient({ posts }) {
-  const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
-  const visiblePosts = posts.slice(0, visibleCount);
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore || !cursor) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/posts?before=${encodeURIComponent(cursor)}`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setPosts((prev) => [...prev, ...data.posts]);
+      setHasMore(data.hasMore);
+      setCursor(data.nextCursor);
+    } catch (error) {
+      console.error("Failed to load more posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [cursor, hasMore, loading]);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   return (
     <>
-      {visiblePosts.map((post) => (
+      {posts.map((post) => (
         <PostCard key={post._id} post={post} />
       ))}
 
-      {visibleCount < posts.length && (
-        <div className="flex justify-center px-4 py-4">
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center px-4 py-4">
           <button
             type="button"
-            onClick={() => setVisibleCount((count) => count + POSTS_PER_PAGE)}
-            className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600"
+            onClick={loadMore}
+            disabled={loading}
+            className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
           >
-            Show more
+            {loading ? "Loading..." : "Show more"}
           </button>
         </div>
       )}

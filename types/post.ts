@@ -9,4 +9,8 @@ export interface IPost {
   authorUsername?: string;
   likes: Types.ObjectId[];
   comments: IComment[];
+  createdAt: Date;
+  updatedAt: Date;
+  likesCount?: number;
+  commentsCount?: number;
 }
