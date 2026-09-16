@@ -6,11 +6,24 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   getExistingSubscription,
+  getPlatform,
   isPushSupported,
   isStandalone,
   subscribeToPush,
   syncExistingSubscription,
 } from "@/lib/push-client";
+
+// Notification.requestPermission() can never reopen the native dialog once
+// it's "denied" — every browser blocks that on purpose. The only real fix is
+// the user re-enabling it themselves, so give them the exact, platform-
+// specific path instead of a vague "check your settings".
+const REVOKED_INSTRUCTIONS = {
+  ios: 'Notifications got turned off. Go to Settings → Notifications → mig33 → Allow Notifications.',
+  android:
+    "Notifications got turned off. Open your phone's Settings → Apps → mig33 → Notifications to turn them back on.",
+  desktop:
+    "Notifications got turned off. Click the lock/info icon next to the address bar, then allow notifications again.",
+};
 
 // Session-scoped, not persistent: "Not now" should only quiet the prompt for
 // the current app open, not forever — the next time the installed app is
@@ -104,10 +117,10 @@ export default function PushPermissionPrompt() {
   // (and everything else in the app shell), regardless of which stacking
   // context it's mounted under in the component tree.
   return createPortal(
-    <div className="bg-panel border-default text-primary fixed inset-x-0 top-0 z-[9999] flex h-14 items-center justify-between gap-3 border-b px-4 text-sm shadow-lg">
+    <div className="bg-panel border-default text-primary fixed inset-x-0 top-0 z-[9999] flex min-h-14 items-center justify-between gap-3 border-b px-4 py-2 text-sm shadow-lg">
       <span>
         {revoked
-          ? "Notifications got turned off. Re-enable them in your browser or phone settings to keep getting alerts."
+          ? REVOKED_INSTRUCTIONS[getPlatform()]
           : "Turn on notifications for new messages and activity?"}
       </span>
       <div className="flex shrink-0 items-center gap-2">
