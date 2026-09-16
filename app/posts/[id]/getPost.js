@@ -9,7 +9,7 @@ export async function getPostWithComments(id) {
   const session = await getServerSession(authOptions);
   const doc = await Post.findById(id).lean({ virtuals: true }).populate({
     path: "comments.user",
-    select: "name",
+    select: "name username email profileImage",
   });
 
   if (!doc) return null;
@@ -23,21 +23,11 @@ export async function getPostWithComments(id) {
   // Fetch author data to get profile image
   const author = await User.findById(doc.authorId).lean();
 
-  // Fetch user data for all commenters to get their names and usernames
-  const userIds = commentsArray.map((c) => c.user).filter(Boolean);
-  const users = userIds.length
-    ? await User.find({ _id: { $in: userIds } }).lean()
-    : [];
-  const userById = {};
-  users.forEach((u) => {
-    userById[u._id.toString()] = u;
-  });
-
   const mappedComments = commentsArray.map((c) => {
-    const user = userById[c.user?.toString()];
+    const user = c.user && typeof c.user === "object" ? c.user : null;
     return {
       id: c._id.toString(),
-      userId: c.user?.toString(),
+      userId: user?._id ? user._id.toString() : c.user?.toString(),
       name: user?.name || "Unknown",
       username: user?.username || c.username || "user",
       email: c.email || user?.email || "Unknown",
