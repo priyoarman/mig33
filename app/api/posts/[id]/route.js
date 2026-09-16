@@ -85,7 +85,20 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   await connectMongoDB();
+  const session = await getServerSession(authOptions);
+
+  if (!session)
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
   const { id } = await params;
+  const post = await Post.findById(id);
+
+  if (!post)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (post.authorId !== session.user.id)
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   await Post.findByIdAndDelete(id);
   return NextResponse.json({ message: "Post Deleted" }, { status: 200 });
 }
