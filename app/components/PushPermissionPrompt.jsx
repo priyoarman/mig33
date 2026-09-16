@@ -1,23 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   getExistingSubscription,
   isPushSupported,
   isStandalone,
   subscribeToPush,
+  syncExistingSubscription,
 } from "@/lib/push-client";
 
 const DISMISS_KEY = "push-permission-prompt-dismissed";
 
 export default function PushPermissionPrompt() {
+  const pathname = usePathname();
   const { status } = useSession();
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Show right after the first standalone launch — logged in or not — since
+  // that's the moment a user has just finished adding the app to their home
+  // screen. Only permission gating (not auth) decides whether to ask.
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (pathname === "/install") return;
+    if (status === "loading") return;
     if (!isPushSupported() || !isStandalone()) return;
     if (Notification.permission !== "default") return;
     if (localStorage.getItem(DISMISS_KEY) === "true") return;
@@ -27,6 +34,15 @@ export default function PushPermissionPrompt() {
         if (!subscription) setVisible(true);
       })
       .catch(() => {});
+  }, [pathname, status]);
+
+  // A subscription created while logged out has no owner on the backend yet
+  // (the subscribe endpoint requires a session). Once a session shows up,
+  // bind whatever subscription already exists on this device to it.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (!isPushSupported() || !isStandalone()) return;
+    syncExistingSubscription().catch(() => {});
   }, [status]);
 
   if (!visible) return null;
@@ -53,7 +69,10 @@ export default function PushPermissionPrompt() {
   };
 
   return (
-    <div className="bg-panel border-default text-primary mx-4 mt-3 flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm">
+    <div
+      className="bg-panel border-default text-primary fixed inset-x-4 z-50 flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg"
+      style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+    >
       <span>Turn on notifications for new messages and activity?</span>
       <div className="flex shrink-0 items-center gap-2">
         <button

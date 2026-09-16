@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { IoClose } from "react-icons/io5";
 
 const DISMISS_KEY = "ios-install-banner-dismissed";
 
 export default function IosInstallBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -20,6 +22,8 @@ export default function IosInstallBanner() {
     }
   }, []);
 
+  // The /install page already walks through this same instruction in detail.
+  if (pathname === "/install") return null;
   if (!visible) return null;
 
   const dismiss = () => {
