@@ -175,7 +175,7 @@ export default function PostCard({ post }) {
                   <button
                     type="button"
                     onClick={() => setIsEditOpen(true)}
-                    className="rounded-full p-1.5 text-cyan-500 transition-colors hover:bg-cyan-500/10 hover:text-cyan-600"
+                    className="rounded-full px-1.5 text-cyan-500 transition-colors hover:bg-cyan-500/10 hover:text-cyan-600"
                     aria-label="Edit post"
                   >
                     <HiOutlinePencilAlt className="text-base" />
