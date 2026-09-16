@@ -13,13 +13,7 @@ import {
   IoPhonePortraitOutline,
   IoCopyOutline,
 } from "react-icons/io5";
-import { isStandalone } from "@/lib/push-client";
-
-function detectPlatform(ua) {
-  if (/iphone|ipad|ipod/i.test(ua)) return "ios";
-  if (/android/i.test(ua)) return "android";
-  return "desktop";
-}
+import { getPlatform, isStandalone } from "@/lib/push-client";
 
 function detectInAppBrowser(ua) {
   const knownApps =
@@ -49,7 +43,7 @@ export default function GetAppOnboarding() {
   useEffect(() => {
     const ua = window.navigator.userAgent;
     setState({
-      platform: detectPlatform(ua),
+      platform: getPlatform(),
       inApp: detectInAppBrowser(ua),
       standalone: isStandalone(),
     });
