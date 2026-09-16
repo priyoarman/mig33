@@ -1,6 +1,11 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import Notification from "@/models/notifications";
+// Registers the "Post" model that Notification.populate("postId", ...) below
+// resolves by ref name; this route never references Post directly, so
+// without this import the populate throws MissingSchemaError whenever this
+// route runs before some other route that happens to import models/posts.
+import "@/models/posts";
 import { snippet } from "@/lib/text";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";

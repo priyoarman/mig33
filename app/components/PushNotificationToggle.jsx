@@ -3,15 +3,12 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { FaBell, FaBellSlash } from "react-icons/fa";
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
-}
+import {
+  getExistingSubscription,
+  isPushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push-client";
 
 export default function PushNotificationToggle() {
   const { status } = useSession();
@@ -21,65 +18,25 @@ export default function PushNotificationToggle() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    const isSupported =
-      typeof window !== "undefined" &&
-      "serviceWorker" in navigator &&
-      "PushManager" in window;
+    const isSupported = isPushSupported();
     setSupported(isSupported);
     if (!isSupported) return;
 
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => registration.pushManager.getSubscription())
+    getExistingSubscription()
       .then((subscription) => setSubscribed(!!subscription))
       .catch(() => {});
   }, [status]);
-
-  const subscribe = async () => {
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!publicKey) return;
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
-
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
-
-    await fetch("/api/notifications/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(subscription.toJSON()),
-    });
-    setSubscribed(true);
-  };
-
-  const unsubscribe = async () => {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      setSubscribed(false);
-      return;
-    }
-    await subscription.unsubscribe();
-    await fetch("/api/notifications/unsubscribe", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: subscription.endpoint }),
-    });
-    setSubscribed(false);
-  };
 
   const toggle = async () => {
     if (busy) return;
     setBusy(true);
     try {
       if (subscribed) {
-        await unsubscribe();
+        await unsubscribeFromPush();
+        setSubscribed(false);
       } else {
-        await subscribe();
+        const success = await subscribeToPush();
+        setSubscribed(success);
       }
     } catch (error) {
       console.error("Push notification toggle failed:", error);
