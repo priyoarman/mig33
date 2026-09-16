@@ -104,7 +104,7 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
               type="button"
               onClick={onClose}
               aria-label="Close edit post"
-              className="border-default hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full border transition"
+              className="border-default hover-panel text-muted hover:text-primary flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border transition"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -139,7 +139,7 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
                     <button
                       type="button"
                       onClick={() => removeExistingImage(url)}
-                      className="bg-opacity-50 absolute top-2 right-2 rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
+                      className="bg-opacity-50 absolute top-2 right-2 cursor-pointer rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
                     >
                       &times;
                     </button>
@@ -158,7 +158,7 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
                 <button
                   type="button"
                   onClick={removeNewMedia}
-                  className="bg-opacity-50 absolute top-2 right-2 rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
+                  className="bg-opacity-50 absolute top-2 right-2 cursor-pointer rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
                 >
                   &times;
                 </button>

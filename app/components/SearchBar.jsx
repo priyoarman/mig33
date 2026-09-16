@@ -162,7 +162,7 @@ export default function SearchBar() {
               setSuggestions([]);
               setShowDropdown(false);
             }}
-            className="ml-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+            className="ml-2 cursor-pointer text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
           >
             <MdClose size={20} />
           </button>
@@ -185,7 +185,7 @@ export default function SearchBar() {
                 <button
                   key={item.query}
                   onClick={() => handleSearch(item.query)}
-                  className="flex w-full items-center justify-between rounded px-2 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                  className="flex w-full cursor-pointer items-center justify-between rounded px-2 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
                 >
                   <span className="flex items-center gap-2 truncate text-neutral-900 dark:text-neutral-100">
                     <BsSearch className="shrink-0 text-neutral-400" size={12} />
@@ -195,7 +195,7 @@ export default function SearchBar() {
                     role="button"
                     tabIndex={0}
                     onClick={(e) => removeHistoryItem(item.query, e)}
-                    className="shrink-0 rounded-full p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                    className="shrink-0 cursor-pointer rounded-full p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
                   >
                     <MdClose size={16} />
                   </span>
@@ -217,7 +217,7 @@ export default function SearchBar() {
               <div className="sticky top-0 flex border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
                 <button
                   onClick={() => setActiveTab("all")}
-                  className={`flex-1 px-4 py-2 text-center font-semibold ${
+                  className={`flex-1 cursor-pointer px-4 py-2 text-center font-semibold ${
                     activeTab === "all"
                       ? "border-b-2 border-blue-500 text-blue-500"
                       : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
@@ -227,7 +227,7 @@ export default function SearchBar() {
                 </button>
                 <button
                   onClick={() => setActiveTab("posts")}
-                  className={`flex-1 px-4 py-2 text-center font-semibold ${
+                  className={`flex-1 cursor-pointer px-4 py-2 text-center font-semibold ${
                     activeTab === "posts"
                       ? "border-b-2 border-blue-500 text-blue-500"
                       : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
@@ -237,7 +237,7 @@ export default function SearchBar() {
                 </button>
                 <button
                   onClick={() => setActiveTab("users")}
-                  className={`flex-1 px-4 py-2 text-center font-semibold ${
+                  className={`flex-1 cursor-pointer px-4 py-2 text-center font-semibold ${
                     activeTab === "users"
                       ? "border-b-2 border-blue-500 text-blue-500"
                       : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
@@ -259,7 +259,7 @@ export default function SearchBar() {
                         <button
                           key={post._id}
                           onClick={() => handleSelectSuggestion(post, "post")}
-                          className="w-full truncate rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                          className="w-full cursor-pointer truncate rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
                         >
                           <p className="truncate text-neutral-900 dark:text-neutral-100">
                             {post.body}
@@ -282,7 +282,7 @@ export default function SearchBar() {
                         <button
                           key={user._id}
                           onClick={() => handleSelectSuggestion(user, "user")}
-                          className="flex w-full items-center gap-3 rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                          className="flex w-full cursor-pointer items-center gap-3 rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
                         >
                           {user.profileImage && (
                             <div className="avatar-square h-8 w-8 overflow-hidden rounded-full">
@@ -321,7 +321,7 @@ export default function SearchBar() {
               <div className="border-t border-gray-200 p-2 dark:border-gray-700">
                 <button
                   onClick={() => handleSearch(searchQuery)}
-                  className="w-full rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+                  className="w-full cursor-pointer rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
                 >
                   Search for "{searchQuery}"
                 </button>

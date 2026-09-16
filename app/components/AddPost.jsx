@@ -117,7 +117,7 @@ export default function AddPost() {
             <button
               type="button"
               onClick={removeImage}
-              className="bg-opacity-50 absolute top-2 right-2 rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
+              className="bg-opacity-50 absolute top-2 right-2 cursor-pointer rounded-full bg-black px-3 py-0.5 pb-1 font-bold text-white"
             >
               &times;
             </button>

@@ -291,3 +291,21 @@ textarea {
 .ease-spring {
   transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
+@keyframes icon-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  60% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-icon-pop {
+  animation: icon-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

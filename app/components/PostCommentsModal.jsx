@@ -44,7 +44,7 @@ export default function PostCommentsModal({ post }) {
             type="button"
             onClick={close}
             aria-label="Close post view"
-            className="border-default hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full border transition"
+            className="border-default hover-panel text-muted hover:text-primary flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border transition"
           >
             <svg
               viewBox="0 0 24 24"
