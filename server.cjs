@@ -221,8 +221,8 @@ app.prepare().then(() => {
             { projection: { name: 1 } },
           );
         sendPushNotificationToUser(recipientId, {
-          title: sender?.name ? `New message from ${sender.name}` : "New message",
-          body: content,
+          title: sender?.name || "New message",
+          body: `Message: ${content}`,
           url: `/messages?userId=${userId}`,
         });
       } catch (error) {
