@@ -8,6 +8,9 @@ import RemoveBtn from "./RemoveBtn";
 import RichText from "./RichText";
 import EditPostModal from "./EditPostModal";
 import { HiOutlinePencilAlt } from "react-icons/hi";
+import { PiShareFat } from "react-icons/pi";
+import { PiShareFatFill } from "react-icons/pi";
+import { MdOutlineInsertComment } from "react-icons/md";
 import {
   AiOutlineHeart,
   AiFillHeart,
@@ -30,6 +33,8 @@ export default function PostCard({ post }) {
   const [reposted, setReposted] = useState(post.repostedByMe || false);
   const [repostsCount, setRepostsCount] = useState(post.repostsCount || 0);
   const [isReposting, setIsReposting] = useState(false);
+  const [likePulse, setLikePulse] = useState(0);
+  const [repostPulse, setRepostPulse] = useState(0);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [body, setBody] = useState(post.body);
   const [images, setImages] = useState(post.images || []);
@@ -59,6 +64,7 @@ export default function PostCard({ post }) {
 
     setIsLiking(true);
     setLiked(!liked);
+    setLikePulse((n) => n + 1);
     setLikesCount((c) => c + (liked ? -1 : 1));
 
     try {
@@ -92,6 +98,7 @@ export default function PostCard({ post }) {
     const previousReposted = reposted;
     setReposted(!previousReposted);
     setRepostsCount((c) => c + (previousReposted ? -1 : 1));
+    setRepostPulse((n) => n + 1);
 
     try {
       const res = await fetch(`/api/posts/${post._id}/repost`, {
@@ -171,16 +178,16 @@ export default function PostCard({ post }) {
               </div>
 
               {isOwner && (
-                <div className="flex items-center gap-2 text-neutral-500">
+                <div className="flex items-center gap-2 text-neutral-500 text-[16px]">
                   <button
                     type="button"
                     onClick={() => setIsEditOpen(true)}
-                    className="rounded-full px-1.5 text-cyan-500 transition-colors hover:bg-cyan-500/10 hover:text-cyan-600"
+                    className="cursor-pointer rounded-full px-1.5 pb-0.5"
                     aria-label="Edit post"
                   >
-                    <HiOutlinePencilAlt className="text-base" />
+                    <HiOutlinePencilAlt className="text-base cursor-pointer text-cyan-500 transition-colors" />
                   </button>
-                  <div className="text-[16px]">
+                  <div>
                     <RemoveBtn id={post._id} />
                   </div>
                 </div>
@@ -214,17 +221,23 @@ export default function PostCard({ post }) {
 
             <div className="mt-3 flex items-center justify-between gap-2 pr-8 text-sm text-neutral-500 sm:pr-12">
               <div
-                className={`group flex items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors ${liked ? "text-red-600" : "hover:cursor-default hover:bg-red-500/10 hover:text-red-600"}`}
+                className="flex cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-1 text-red-600 transition-colors hover:bg-red-500/10"
                 onClick={handleLike}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-red-500/10">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors">
                   {liked ? (
-                    <AiFillHeart className="text-[18px]" />
+                    <AiFillHeart
+                      key={`liked-${likePulse}`}
+                      className={likePulse > 0 ? "animate-icon-pop text-[18px]" : "text-[18px]"}
+                    />
                   ) : (
-                    <AiOutlineHeart className="text-[18px]" />
+                    <AiOutlineHeart
+                      key={`unliked-${likePulse}`}
+                      className={likePulse > 0 ? "animate-icon-pop text-[18px]" : "text-[18px]"}
+                    />
                   )}
                 </span>
-                <span className="min-w-[1.5rem] text-[13px] font-medium hover:cursor-default">
+                <span className="min-w-[1.5rem] text-[13px] font-medium">
                   {likesCount}
                 </span>
               </div>
@@ -232,10 +245,10 @@ export default function PostCard({ post }) {
               <button
                 type="button"
                 onClick={() => router.push(`/posts/${post._id}/comments`)}
-                className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:cursor-default hover:bg-blue-500/10 hover:text-blue-500"
+                className="flex cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-1 text-blue-500 transition-colors hover:bg-blue-500/10"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-blue-500/10">
-                  <AiOutlineComment className="text-[18px]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+                  <MdOutlineInsertComment className="text-[18px]" />
                 </span>
                 <span className="min-w-[1.5rem] text-[13px] font-medium">
                   {commentsCount}
@@ -245,10 +258,20 @@ export default function PostCard({ post }) {
               <button
                 type="button"
                 onClick={handleRepost}
-                className={`group flex items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors ${reposted ? "text-green-600" : "text-neutral-500 hover:cursor-default hover:bg-green-500/10 hover:text-green-500"}`}
+                className="flex cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-1 text-green-600 transition-colors hover:bg-green-500/10"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-green-500/10">
-                  <AiOutlineRetweet className="text-[18px]" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+                  {reposted ? (
+                    <PiShareFatFill
+                      key={`reposted-${repostPulse}`}
+                      className={repostPulse > 0 ? "animate-icon-pop text-[18px]" : "text-[18px]"}
+                    />
+                  ) : (
+                    <PiShareFat
+                      key={`unreposted-${repostPulse}`}
+                      className={repostPulse > 0 ? "animate-icon-pop text-[18px]" : "text-[18px]"}
+                    />
+                  )}
                 </span>
                 <span className="min-w-[1.5rem] text-[13px] font-medium">
                   {repostsCount}

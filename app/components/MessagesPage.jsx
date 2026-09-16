@@ -431,7 +431,7 @@ const MessagesPage = () => {
               <button
                 type="button"
                 onClick={() => setIncomingNotice("")}
-                className="w-full border-b border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm text-blue-700"
+                className="w-full cursor-pointer border-b border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm text-blue-700"
               >
                 {incomingNotice}
               </button>
@@ -441,7 +441,7 @@ const MessagesPage = () => {
                 key={user._id}
                 type="button"
                 onClick={() => openConversation(user)}
-                className="hover-panel flex w-full items-center gap-3 px-3 py-4 text-left"
+                className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
               >
                 <UserAvatar user={user} />
                 <span className="min-w-0 flex-1">
@@ -467,7 +467,7 @@ const MessagesPage = () => {
                 key={user._id}
                 type="button"
                 onClick={() => openConversation(user)}
-                className="hover-panel flex w-full items-center gap-3 px-3 py-4 text-left"
+                className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
               >
                 <UserAvatar user={user} />
                 <span>
@@ -491,13 +491,15 @@ const MessagesPage = () => {
       ) : (
         <section className="flex min-h-[calc(100vh-65px)] flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
           <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-            <UserAvatar user={activeUser} />
-            <span>
+            <Link href={`/profile/${activeUser.username}`} className="shrink-0">
+              <UserAvatar user={activeUser} />
+            </Link>
+            <Link href={`/profile/${activeUser.username}`} className="hover:underline">
               <strong className="block">{activeUser.name}</strong>
               <span className="text-sm text-gray-500">
                 @{activeUser.username}
               </span>
-            </span>
+            </Link>
           </div>
           <div
             ref={scrollContainerRef}
@@ -567,7 +569,7 @@ const MessagesPage = () => {
               type="submit"
               disabled={sending || !content.trim()}
               title="Send message"
-              className="bg-accent text-on-accent flex h-12 w-12 shrink-0 items-center justify-center rounded-full disabled:opacity-50"
+              className="bg-accent text-on-accent flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
             >
               <FaPaperPlane />
             </button>

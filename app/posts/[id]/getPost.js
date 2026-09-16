@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Post from "@/models/posts";
 import User from "@/models/user";
 import connectMongoDB from "@/lib/mongodb";
@@ -5,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function getPostWithComments(id) {
+  if (!mongoose.isValidObjectId(id)) return null;
+
   await connectMongoDB();
   const session = await getServerSession(authOptions);
   const doc = await Post.findById(id).lean({ virtuals: true }).populate({

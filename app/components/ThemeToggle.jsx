@@ -27,7 +27,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="flex items-center gap-2" 
+      className="flex cursor-pointer items-center gap-2"
       style={{background: "transparent", color: "var(--text)" }}
     >
       <span className="hidden sm:flex font-medium">Theme:</span>

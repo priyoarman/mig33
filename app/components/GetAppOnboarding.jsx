@@ -135,7 +135,7 @@ export default function GetAppOnboarding() {
         </ol>
         <button
           onClick={copyLink}
-          className="hover-panel border-default text-primary flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium"
+          className="hover-panel border-default text-primary flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium"
         >
           <IoCopyOutline />
           {copied ? "Link copied!" : "Or copy this link instead"}
@@ -186,7 +186,7 @@ export default function GetAppOnboarding() {
         </p>
         <button
           onClick={promptInstall}
-          className="bg-accent text-on-accent flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
+          className="bg-accent text-on-accent flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
         >
           <IoDownloadOutline />
           Install App

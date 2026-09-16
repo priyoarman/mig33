@@ -126,7 +126,7 @@ export default function PushPermissionPrompt() {
       <div className="flex shrink-0 items-center gap-2">
         <button
           onClick={dismiss}
-          className="hover-panel rounded-full px-3 py-1 font-medium"
+          className="hover-panel cursor-pointer rounded-full px-3 py-1 font-medium"
         >
           {revoked ? "Got it" : "Not now"}
         </button>
@@ -134,7 +134,7 @@ export default function PushPermissionPrompt() {
           <button
             onClick={enable}
             disabled={busy}
-            className="bg-accent text-on-accent rounded-full px-3 py-1 font-bold disabled:opacity-50"
+            className="bg-accent text-on-accent cursor-pointer rounded-full px-3 py-1 font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
             Enable
           </button>

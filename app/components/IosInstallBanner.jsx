@@ -40,7 +40,7 @@ export default function IosInstallBanner() {
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        className="hover-panel shrink-0 rounded-full p-1"
+        className="hover-panel shrink-0 cursor-pointer rounded-full p-1"
       >
         <IoClose />
       </button>

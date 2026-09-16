@@ -136,7 +136,7 @@ export default function EditProfilePage() {
           </div>
           <button
             onClick={() => router.push("/profile")}
-            className="border-default rounded-full border px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="border-default cursor-pointer rounded-full border px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             Cancel
           </button>
@@ -241,14 +241,14 @@ export default function EditProfilePage() {
             <button
               type="button"
               onClick={() => router.push("/profile")}
-              className="border-default rounded-full border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="border-default cursor-pointer rounded-full border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-60"
+              className="cursor-pointer rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : "Save profile"}
             </button>

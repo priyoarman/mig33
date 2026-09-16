@@ -102,7 +102,7 @@ const SearchResults = () => {
         <div className="border-default bg-panel bg-opacity-80 sticky top-14 z-10 flex border-b backdrop-blur-sm">
           <button
             onClick={() => setActiveTab("all")}
-            className={`flex-1 px-4 py-3 text-center font-semibold transition ${
+            className={`flex-1 cursor-pointer px-4 py-3 text-center font-semibold transition ${
               activeTab === "all"
                 ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"
@@ -112,7 +112,7 @@ const SearchResults = () => {
           </button>
           <button
             onClick={() => setActiveTab("posts")}
-            className={`flex-1 px-4 py-3 text-center font-semibold transition ${
+            className={`flex-1 cursor-pointer px-4 py-3 text-center font-semibold transition ${
               activeTab === "posts"
                 ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"
@@ -122,7 +122,7 @@ const SearchResults = () => {
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`flex-1 px-4 py-3 text-center font-semibold transition ${
+            className={`flex-1 cursor-pointer px-4 py-3 text-center font-semibold transition ${
               activeTab === "users"
                 ? "border-accent text-accent border-b-2"
                 : "text-secondary hover:text-primary"

@@ -65,7 +65,7 @@ export default function GifPickerModal({ isOpen, onClose, onSelect }) {
           <button
             type="button"
             onClick={onClose}
-            className="hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full text-xl transition"
+            className="hover-panel text-muted hover:text-primary flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xl transition"
           >
             &times;
           </button>
@@ -113,7 +113,7 @@ export default function GifPickerModal({ isOpen, onClose, onSelect }) {
                   key={idx}
                   type="button"
                   onClick={() => handleSelect(item.url, item.preview)}
-                  className="border-default bg-surface group relative overflow-hidden rounded-xl border transition hover:opacity-90"
+                  className="border-default bg-surface group relative cursor-pointer overflow-hidden rounded-xl border transition hover:opacity-90"
                 >
                   <img src={item.preview} alt={`gif-${idx}`} className="h-28 w-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />

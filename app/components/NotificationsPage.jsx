@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useRealtimeNotifications } from "./RealtimeProvider";
 import NotificationRowSkeletonList from "./skeletons/NotificationRowSkeleton";
@@ -23,6 +24,7 @@ function ActorAvatar({ actor }) {
 }
 
 const NotificationsPage = () => {
+  const router = useRouter();
   const { notifications, notificationsLoading, clearUnread } =
     useRealtimeNotifications();
 
@@ -55,15 +57,39 @@ const NotificationsPage = () => {
           <div>
             {notifications.map((notification) => {
               const href = notification.postId
-                ? `/posts/${notification.postId}`
+                ? `/posts/${notification.postId}/comments`
                 : notification.actor?.username
                   ? `/profile/${notification.actor.username}`
                   : null;
+              const profileHref = notification.actor?.username
+                ? `/profile/${notification.actor.username}`
+                : null;
+              const stopRowNavigation = (event) => event.stopPropagation();
               const content = (
                 <div className="flex items-start gap-3">
-                  <ActorAvatar actor={notification.actor} />
+                  {profileHref ? (
+                    <Link
+                      href={profileHref}
+                      onClick={stopRowNavigation}
+                      className="shrink-0"
+                    >
+                      <ActorAvatar actor={notification.actor} />
+                    </Link>
+                  ) : (
+                    <ActorAvatar actor={notification.actor} />
+                  )}
                   <div className="min-w-0 flex-1">
-                    <strong>{notification.actor?.name || "Someone"}</strong>{" "}
+                    {profileHref ? (
+                      <Link
+                        href={profileHref}
+                        onClick={stopRowNavigation}
+                        className="font-bold hover:underline"
+                      >
+                        {notification.actor?.name || "Someone"}
+                      </Link>
+                    ) : (
+                      <strong>{notification.actor?.name || "Someone"}</strong>
+                    )}{" "}
                     {notification.message}
                     <time className="mt-1 block text-sm text-gray-500">
                       {formatTimeAgo(notification.createdAt)}
@@ -78,13 +104,21 @@ const NotificationsPage = () => {
               );
 
               return href ? (
-                <Link
+                <div
                   key={notification.id}
-                  href={href}
-                  className="hover-panel block border-b-1 border-gray-200 px-4 py-4 text-base"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(href)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      router.push(href);
+                    }
+                  }}
+                  className="hover-panel block cursor-pointer border-b-1 border-gray-200 px-4 py-4 text-base"
                 >
                   {content}
-                </Link>
+                </div>
               ) : (
                 <article
                   key={notification.id}

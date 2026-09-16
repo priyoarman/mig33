@@ -77,7 +77,7 @@ export default function PostsListClient({
             type="button"
             onClick={loadMore}
             disabled={loading}
-            className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
+            className="cursor-pointer rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Loading more..." : "Show more"}
           </button>

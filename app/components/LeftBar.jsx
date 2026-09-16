@@ -9,6 +9,10 @@ import { BsSearch } from "react-icons/bs";
 import { FaBell } from "react-icons/fa";
 import { FaEnvelope } from "react-icons/fa6";
 import { FaUserCircle } from "react-icons/fa";
+import { IoHome } from "react-icons/io5";
+import { FaCompass } from "react-icons/fa";
+import { IoNotifications } from "react-icons/io5";
+  
 import MiniProfile from "./MiniProfile";
 import { useRealtimeNotifications } from "./RealtimeProvider";
 
@@ -23,7 +27,7 @@ const LeftBar = () => {
       label: "Home",
       icon: (
         <span className="flex h-8 w-8 shrink-0 items-center justify-center">
-          <GoHomeFill className="text-2xl" />
+          <IoHome className="text-2xl" />
         </span>
       ),
     },
@@ -32,7 +36,7 @@ const LeftBar = () => {
       label: "Explore",
       icon: (
         <span className="flex h-8 w-8 shrink-0 items-center justify-center">
-          <MdExplore className="text-2xl" />
+          <FaCompass className="text-2xl" />
         </span>
       ),
     },
@@ -41,7 +45,7 @@ const LeftBar = () => {
       label: "Notifications",
       icon: (
         <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-          <FaBell className="text-2xl" />
+          <IoNotifications className="text-3xl" />
           {unreadCount > 0 && (
             <span className="absolute -top-3 -right-4 rounded-full bg-red-500 px-1.5 text-[11px] leading-5 font-bold text-white">
               +{unreadCount}
