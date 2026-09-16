@@ -204,8 +204,8 @@ export async function POST(request) {
 
     const sender = await User.findById(senderId).select("name").lean();
     sendPushNotificationToUser(recipientId, {
-      title: sender?.name ? `New message from ${sender.name}` : "New message",
-      body: content,
+      title: sender?.name || "New message",
+      body: `Message: ${content}`,
       url: `/messages?userId=${senderId}`,
     }).catch((error) => {
       console.error("Failed to send push notification:", error);
