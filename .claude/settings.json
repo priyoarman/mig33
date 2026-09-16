@@ -20,7 +20,8 @@
       "Bash(kill 31189 31227)",
       "Bash(node --check server.cjs)",
       "Bash(ps -o pid,lstart,command -p 32945)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(vercel whoami *)"
     ]
   }
 }

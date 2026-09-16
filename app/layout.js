@@ -2,6 +2,7 @@ import LeftBar from "./components/LeftBar";
 import RightBar from "./components/RightBar";
 import MobileTopBar from "./components/MobileTopBar";
 import IosInstallBanner from "./components/IosInstallBanner";
+import PushPermissionPrompt from "./components/PushPermissionPrompt";
 import "./globals.css";
 import { AuthProvider } from "./Providers";
 import { Analytics } from "@vercel/analytics/next";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
             <MobileTopBar />
             <main className="reddit-main-column min-w-0">
               <IosInstallBanner />
+              <PushPermissionPrompt />
               {children}
             </main>
             <Analytics />
