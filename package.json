@@ -13,6 +13,7 @@
     "@types/node": "^26.4.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.6",
+    "@types/web-push": "^3.6.4",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "bcryptjs": "^3.0.2",
@@ -26,7 +27,8 @@
     "react-icons": "^5.5.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ipconfig getifaddr *)",
+      "Bash(brew list *)",
+      "Bash(mkcert -install)",
+      "Bash(mkcert -CAROOT)",
+      "Bash(ls -la \"/Users/priyoarman/Library/Application Support/mkcert/\")",
+      "Read(//Users/priyoarman/Library/Application Support/mkcert/**)",
+      "Bash(mkcert -key-file certs/dev-key.pem -cert-file certs/dev-cert.pem 192.168.1.45 localhost 127.0.0.1)",
+      "Bash(pkill -f \"cloudflared tunnel\")",
+      "Bash(kill 30313)",
+      "Bash(curl -sk -o /dev/null -w \"home: %{http_code}\\\\n\" https://192.168.1.45:3000/)",
+      "Bash(curl -sk -o /dev/null -w \"sw.js: %{http_code}\\\\n\" https://192.168.1.45:3000/sw.js)",
+      "Bash(curl -sk -o /dev/null -w \"manifest: %{http_code}\\\\n\" https://192.168.1.45:3000/manifest.webmanifest)",
+      "Bash(mkdir -p /Users/priyoarman/Documents/projects/mig33/certs/share)",
+      "Bash(cp \"/Users/priyoarman/Library/Application Support/mkcert/rootCA.pem\" /Users/priyoarman/Documents/projects/mig33/certs/share/mig33-dev-ca.pem)",
+      "Bash(nohup python3 -m http.server 8090 --bind 0.0.0.0)",
+      "Bash(curl -s -o /dev/null -w \"cert file: %{http_code}\\\\n\" http://192.168.1.45:8090/mig33-dev-ca.pem)",
+      "Bash(kill 31189 31227)",
+      "Bash(node --check server.cjs)",
+      "Bash(ps -o pid,lstart,command -p 32945)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

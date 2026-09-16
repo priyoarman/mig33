@@ -6,6 +6,7 @@ import User from "@/models/user";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import { emitToUser } from "@/lib/realtime";
+import { sendPushNotificationToUser } from "@/lib/webpush";
 
 const DEFAULT_PAGE_SIZE = 30;
 
@@ -200,6 +201,15 @@ export async function POST(request) {
     // only used when the sender's socket is unavailable, so push the
     // recipient a live update here too.
     emitToUser(recipientId, "message", serialized);
+
+    const sender = await User.findById(senderId).select("name").lean();
+    sendPushNotificationToUser(recipientId, {
+      title: sender?.name ? `New message from ${sender.name}` : "New message",
+      body: content,
+      url: `/messages?userId=${senderId}`,
+    }).catch((error) => {
+      console.error("Failed to send push notification:", error);
+    });
 
     return NextResponse.json({ message: serialized });
   } catch (error) {
