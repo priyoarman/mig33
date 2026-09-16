@@ -1,5 +1,6 @@
 import Notification from "@/models/notifications";
 import type { INotification } from "@/types/notification";
+import { sendPushNotificationToUser } from "@/lib/webpush";
 
 type NotificationType = INotification["type"];
 
@@ -72,5 +73,13 @@ export async function createAndEmitNotification(
     ...notification,
     id: saved._id.toString(),
     createdAt: saved.createdAt.toISOString(),
+  });
+
+  sendPushNotificationToUser(recipient, {
+    title: notification.actor?.name || "mig33",
+    body: notification.message,
+    url: notification.postId ? `/posts/${notification.postId}` : "/notifications",
+  }).catch((error) => {
+    console.error("Failed to send push notification:", error);
   });
 }

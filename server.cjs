@@ -1,14 +1,34 @@
-const { createServer } = require("http");
+const { createServer: createHttpServer } = require("http");
+const { createServer: createHttpsServer } = require("https");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const next = require("next");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const { getToken } = require("next-auth/jwt");
+const webpush = require("web-push");
+
+const tlsKeyPath = path.join(__dirname, "certs", "dev-key.pem");
+const tlsCertPath = path.join(__dirname, "certs", "dev-cert.pem");
+const tlsCredentials =
+  process.env.LOCAL_HTTPS === "true" &&
+  fs.existsSync(tlsKeyPath) &&
+  fs.existsSync(tlsCertPath)
+    ? { key: fs.readFileSync(tlsKeyPath), cert: fs.readFileSync(tlsCertPath) }
+    : null;
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 
 process.env.AUTH_TRUST_HOST = "true";
+
+const getLanAddresses = () =>
+  Object.values(os.networkInterfaces())
+    .flat()
+    .filter((iface) => iface && iface.family === "IPv4" && !iface.internal)
+    .map((iface) => iface.address);
 
 const resolveRequestOrigin = (request) => {
   const host = request.headers["x-forwarded-host"] || request.headers.host;
@@ -41,10 +61,59 @@ const messageSchema = new mongoose.Schema(
 );
 const Message =
   mongoose.models.Message || mongoose.model("Message", messageSchema);
+const pushSubscriptionSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    endpoint: { type: String, required: true, unique: true },
+    keys: {
+      p256dh: { type: String, required: true },
+      auth: { type: String, required: true },
+    },
+    userAgent: { type: String },
+  },
+  { timestamps: true },
+);
+const PushSubscription =
+  mongoose.models.PushSubscription ||
+  mongoose.model("PushSubscription", pushSubscriptionSchema);
 let databaseConnection;
 const connectDatabase = () => {
   databaseConnection ||= mongoose.connect(process.env.MONGODB_URI);
   return databaseConnection;
+};
+
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const vapidSubject = process.env.VAPID_SUBJECT;
+if (vapidPublicKey && vapidPrivateKey && vapidSubject) {
+  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+}
+
+const sendPushNotificationToUser = async (userId, payload) => {
+  if (!userId || !vapidPublicKey || !vapidPrivateKey || !vapidSubject) return;
+  try {
+    await connectDatabase();
+    const subscriptions = await PushSubscription.find({ userId }).lean();
+    const message = JSON.stringify(payload);
+    await Promise.allSettled(
+      subscriptions.map(async (subscription) => {
+        try {
+          await webpush.sendNotification(
+            { endpoint: subscription.endpoint, keys: subscription.keys },
+            message,
+          );
+        } catch (error) {
+          if (error?.statusCode === 404 || error?.statusCode === 410) {
+            await PushSubscription.deleteOne({ _id: subscription._id });
+          } else {
+            console.error("Push notification failed:", error);
+          }
+        }
+      }),
+    );
+  } catch (error) {
+    console.error("Failed to send push notification:", error);
+  }
 };
 
 const parseCookieHeader = (cookieHeader = "") => {
@@ -62,9 +131,11 @@ const parseCookieHeader = (cookieHeader = "") => {
 };
 
 app.prepare().then(() => {
-  const httpServer = createServer((request, response) =>
-    handle(request, response),
-  );
+  const httpServer = tlsCredentials
+    ? createHttpsServer(tlsCredentials, (request, response) =>
+        handle(request, response),
+      )
+    : createHttpServer((request, response) => handle(request, response));
   const io = new Server(httpServer, {
     cors: {
       origin: true,
@@ -142,6 +213,18 @@ app.prepare().then(() => {
         };
         io.to(`user:${recipientId}`).emit("message", serialized);
         acknowledge?.({ message: serialized });
+
+        const sender = await mongoose.connection
+          .collection("users")
+          .findOne(
+            { _id: new mongoose.Types.ObjectId(userId) },
+            { projection: { name: 1 } },
+          );
+        sendPushNotificationToUser(recipientId, {
+          title: sender?.name ? `New message from ${sender.name}` : "New message",
+          body: content,
+          url: `/messages?userId=${userId}`,
+        });
       } catch (error) {
         console.error("Send message error:", error);
         acknowledge?.({ error: "Message could not be sent" });
@@ -150,6 +233,10 @@ app.prepare().then(() => {
   });
 
   httpServer.listen(port, hostname, () => {
-    console.log(`> Ready on http://${hostname}:${port}`);
+    const protocol = tlsCredentials ? "https" : "http";
+    console.log(`> Local:   ${protocol}://localhost:${port}`);
+    for (const address of getLanAddresses()) {
+      console.log(`> Network: ${protocol}://${address}:${port}`);
+    }
   });
 });

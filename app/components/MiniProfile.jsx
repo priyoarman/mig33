@@ -8,6 +8,7 @@ import { BsThreeDots } from "react-icons/bs";
 import { IoSettingsSharp } from "react-icons/io5";
 import { IoLogOut } from "react-icons/io5";
 import ThemeToggle from "./ThemeToggle";
+import PushNotificationToggle from "./PushNotificationToggle";
 
 const MiniProfile = ({ compact = false }) => {
   const { data: session, status } = useSession();
@@ -52,6 +53,7 @@ const MiniProfile = ({ compact = false }) => {
           <div className="border-default flex w-full cursor-pointer items-center justify-center gap-1 border-b px-2 py-2 text-center text-[16px] font-bold">
             <ThemeToggle />
           </div>
+          <PushNotificationToggle />
           <button
             onClick={() => {
               setOpen(false);

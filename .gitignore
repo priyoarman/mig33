@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev TLS certs (mkcert)
+/certs
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
