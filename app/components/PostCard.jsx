@@ -16,6 +16,7 @@ import {
 } from "react-icons/ai";
 import Image from "next/image";
 import CommentRowSkeletonList from "./skeletons/CommentRowSkeleton";
+import { formatTimeAgo } from "@/lib/date";
 
 export default function PostCard({ post }) {
   const { data: session } = useSession();
@@ -62,27 +63,7 @@ export default function PostCard({ post }) {
     loadComments();
   }, [isCommentsOpen, post?._id]);
 
-  let displayDate = "";
-  if (post?.createdAt) {
-    const createdAt = new Date(post.createdAt);
-    const now = new Date();
-    const diffMs = now - createdAt;
-
-    const diffSeconds = Math.floor(diffMs / 1000);
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays >= 1) {
-      displayDate = diffDays === 1 ? "1d ago" : `${diffDays}d ago`;
-    } else if (diffHours >= 1) {
-      displayDate = `${diffHours}h ago`;
-    } else if (diffMinutes >= 1) {
-      displayDate = `${diffMinutes}m ago`;
-    } else {
-      displayDate = "Just now";
-    }
-  }
+  const displayDate = post?.createdAt ? formatTimeAgo(post.createdAt) : "";
 
   const handleLike = async () => {
     if (!session) {

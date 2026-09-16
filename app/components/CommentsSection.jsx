@@ -6,6 +6,7 @@ import { FiTrash2 } from "react-icons/fi";
 import { HiOutlinePencilAlt } from "react-icons/hi";
 import ComposerTextarea from "./ComposerTextarea";
 import RichText from "./RichText";
+import { formatTimeAgo } from "@/lib/date";
 
 export default function CommentsSection({
   postId,
@@ -127,7 +128,7 @@ export default function CommentsSection({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-neutral-400">
-                        {new Date(c.createdAt).toLocaleDateString()}
+                        {formatTimeAgo(c.createdAt)}
                       </span>
                       {session?.user?.id === c.userId && (
                         <div className="flex gap-1">
