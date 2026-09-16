@@ -7,6 +7,12 @@ const CommentSchema = new Schema<IComment>(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     username: { type: String, required: true },
     body: { type: String, required: true },
+    mentions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true },
 );
@@ -16,7 +22,7 @@ const postsSchema = new Schema<IPost>(
     body: {
       type: String,
       required: function () {
-        return !this.images || this.images.length === 0;
+        return !this.repostOf && (!this.images || this.images.length === 0);
       },
     },
     images: [
@@ -45,6 +51,17 @@ const postsSchema = new Schema<IPost>(
       type: [CommentSchema],
       default: [],
     },
+    mentions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    repostOf: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -60,6 +77,8 @@ postsSchema.virtual("likesCount").get(function () {
 postsSchema.virtual("commentsCount").get(function () {
   return this.comments.length;
 });
+
+postsSchema.index({ repostOf: 1 });
 
 const Post =
   (models.Post as Model<IPost> | undefined) ??

@@ -4,6 +4,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
+import {
+  recordNewHashtags,
+  resolveMentions,
+  notifyNewMentions,
+} from "@/lib/mentionsAndTags";
 
 export async function GET(request, { params }) {
   await connectMongoDB();
@@ -32,6 +37,9 @@ export async function PUT(request, { params }) {
 
   if (post.authorId !== session.user.id)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const previousBody = post.body;
+
   // Support both JSON body updates and multipart/form-data with an image upload
   const contentType = request.headers.get("content-type") || "";
   if (contentType.includes("multipart/form-data")) {
@@ -71,16 +79,38 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
       }
     }
-
-    await post.save();
-    return NextResponse.json({ message: "Post Updated" }, { status: 200 });
   } else {
     // JSON update (no image)
     const { newBody } = await request.json();
     if (newBody !== undefined) post.body = newBody;
-    await post.save();
-    return NextResponse.json({ message: "Post Updated" }, { status: 200 });
   }
+
+  if (post.body !== previousBody) {
+    const previousMentionIds = post.mentions || [];
+    const mentionedUsers = await resolveMentions(post.body);
+    post.mentions = mentionedUsers.map((user) => user.id);
+
+    await post.save();
+
+    await recordNewHashtags(post.body, previousBody);
+    await notifyNewMentions({
+      mentionedUsers,
+      previouslyMentionedIds: previousMentionIds,
+      authorId: session.user.id,
+      actor: {
+        name: session.user.name,
+        username: session.user.username,
+        profileImage: session.user.image || null,
+      },
+      postId: post._id.toString(),
+      postBody: post.body,
+      context: "post",
+    });
+  } else {
+    await post.save();
+  }
+
+  return NextResponse.json({ message: "Post Updated" }, { status: 200 });
 }
 
 export async function DELETE(request, { params }) {
@@ -99,6 +129,7 @@ export async function DELETE(request, { params }) {
   if (post.authorId !== session.user.id)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  await Post.deleteMany({ repostOf: id });
   await Post.findByIdAndDelete(id);
   return NextResponse.json({ message: "Post Deleted" }, { status: 200 });
 }

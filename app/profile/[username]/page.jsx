@@ -1,8 +1,8 @@
 import OtherUserProfilePage from "@/app/components/OtherUserProfilePage";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
-import Post from "@/models/posts";
 import User from "@/models/user";
+import { getFeedPage, DEFAULT_FEED_PAGE_SIZE } from "@/lib/posts";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 
@@ -45,33 +45,16 @@ const OtherProfile = async ({ params }) => {
     redirect("/profile");
   }
 
-  const [rawPosts, currentUser] = await Promise.all([
-    Post.find({ authorId: targetUser._id })
-      .sort({ createdAt: -1 })
-      .lean({ virtuals: true }),
+  const [{ posts, hasMore, nextCursor }, currentUser] = await Promise.all([
+    getFeedPage({
+      authorId: targetUser._id.toString(),
+      currentUserId: session?.user?.id,
+      limit: DEFAULT_FEED_PAGE_SIZE,
+    }),
     session?.user?.id
       ? User.findById(session.user.id).select("following").lean()
       : null,
   ]);
-
-  const posts = rawPosts.map((doc) => {
-    const likesArray = Array.isArray(doc.likes) ? doc.likes : [];
-    return {
-      _id: doc._id.toString(),
-      body: doc.body,
-      images: doc.images || [],
-      authorId: doc.authorId,
-      authorName: doc.authorName,
-      authorUsername: doc.authorUsername,
-      createdAt: doc.createdAt.toISOString(),
-      updatedAt: doc.updatedAt.toISOString(),
-      likesCount: doc.likesCount ?? likesArray.length,
-      likedByMe: session
-        ? likesArray.map(String).includes(session.user.id)
-        : false,
-      commentsCount: doc.commentsCount ?? doc.comments?.length ?? 0,
-    };
-  });
 
   const isFollowing =
     !!session?.user?.id &&
@@ -109,6 +92,8 @@ const OtherProfile = async ({ params }) => {
   return (
     <OtherUserProfilePage
       posts={posts}
+      hasMore={hasMore}
+      nextCursor={nextCursor}
       profileUser={profileUser}
       profileStats={profileStats}
       isFollowing={isFollowing}

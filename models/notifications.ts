@@ -7,7 +7,7 @@ const notificationSchema = new Schema<INotification>(
     actorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: ["like", "comment", "follow"],
+      enum: ["like", "comment", "follow", "mention", "repost"],
       required: true,
     },
     message: { type: String, required: true },

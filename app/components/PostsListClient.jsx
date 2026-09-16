@@ -7,6 +7,8 @@ export default function PostsListClient({
   initialPosts,
   initialHasMore,
   initialCursor,
+  endpoint = "/api/posts",
+  emptyState = null,
 }) {
   const [posts, setPosts] = useState(initialPosts);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -18,8 +20,9 @@ export default function PostsListClient({
     if (loading || !hasMore || !cursor) return;
     setLoading(true);
     try {
+      const separator = endpoint.includes("?") ? "&" : "?";
       const res = await fetch(
-        `/api/posts?before=${encodeURIComponent(cursor)}`,
+        `${endpoint}${separator}before=${encodeURIComponent(cursor)}`,
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -31,7 +34,7 @@ export default function PostsListClient({
     } finally {
       setLoading(false);
     }
-  }, [cursor, hasMore, loading]);
+  }, [cursor, hasMore, loading, endpoint]);
 
   useEffect(() => {
     if (!hasMore) return;
@@ -48,10 +51,14 @@ export default function PostsListClient({
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
+  if (posts.length === 0) {
+    return emptyState;
+  }
+
   return (
     <>
       {posts.map((post) => (
-        <PostCard key={post._id} post={post} />
+        <PostCard key={post.feedKey || post._id} post={post} />
       ))}
 
       {hasMore && (
