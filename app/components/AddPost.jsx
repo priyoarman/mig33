@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { PiImageSquareBold } from "react-icons/pi";
 import { MdOutlineGifBox } from "react-icons/md";
 import { HiMiniListBullet } from "react-icons/hi2";
+import ComposerTextarea from "./ComposerTextarea";
 
 export default function AddPost() {
   const { data: session, status } = useSession();
@@ -153,10 +154,10 @@ export default function AddPost() {
         onSubmit={handleSubmit}
         className="border-default z-20 flex flex-col justify-around border-b-1"
       >
-        <textarea
+        <ComposerTextarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
-          className="border-default bg-panel h-24 resize-none border-b-1 px-4 py-4 outline-0 placeholder:font-medium"
+          onChange={setBody}
+          className="border-default bg-panel h-24 w-full resize-none border-b-1 px-4 py-4 outline-0 placeholder:font-medium"
           placeholder="What's happening?"
         />
         {imagePreview && (

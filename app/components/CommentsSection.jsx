@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { FiTrash2 } from "react-icons/fi";
 import { HiOutlinePencilAlt } from "react-icons/hi";
+import ComposerTextarea from "./ComposerTextarea";
+import RichText from "./RichText";
 
 export default function CommentsSection({
   postId,
@@ -51,6 +53,7 @@ export default function CommentsSection({
         email: data.latestComment.email,
         profileImage: data.latestComment.profileImage,
         body: data.latestComment.body,
+        mentionUsernames: data.latestComment.mentionUsernames || [],
         createdAt: data.latestComment.createdAt,
       };
       setComments((c) => [...c, freshComment]);
@@ -150,7 +153,10 @@ export default function CommentsSection({
                   </div>
 
                   <p className="flex py-4 break-words whitespace-pre-wrap">
-                    {c.body}
+                    <RichText
+                      text={c.body}
+                      mentionUsernames={c.mentionUsernames}
+                    />
                   </p>
                 </div>
               </div>
@@ -159,12 +165,12 @@ export default function CommentsSection({
         </div>
 
         <div className="mt-4">
-          <textarea
+          <ComposerTextarea
             className="border-default bg-surface h-24 w-full resize-none border-b-1 px-4 py-4 outline-0 placeholder:font-medium"
             rows={3}
             placeholder="Write a comment…"
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={setNewComment}
             disabled={saving}
           />
           <button

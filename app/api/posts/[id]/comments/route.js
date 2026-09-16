@@ -6,6 +6,7 @@ import connectMongoDB from "@/lib/mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { createAndEmitNotification } from "@/lib/realtime";
 import { snippet } from "@/lib/text";
+import { resolveMentions, notifyNewMentions } from "@/lib/mentionsAndTags";
 
 export async function GET(request, { params }) {
   await connectMongoDB();
@@ -13,6 +14,7 @@ export async function GET(request, { params }) {
   const post = await Post.findById(id)
     .select("comments")
     .populate("comments.user", "name username email profileImage")
+    .populate("comments.mentions", "username")
     .lean();
 
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -31,6 +33,9 @@ export async function GET(request, { params }) {
       email: user?.email || comment.email || "Unknown",
       profileImage: user?.profileImage || null,
       body: comment.body,
+      mentionUsernames: (comment.mentions || [])
+        .map((mention) => mention?.username)
+        .filter(Boolean),
       createdAt: comment.createdAt
         ? new Date(comment.createdAt).toISOString()
         : new Date().toISOString(),
@@ -60,11 +65,15 @@ export async function POST(request, { params }) {
     if (!post)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const commentBody = comment.trim();
+    const mentionedUsers = await resolveMentions(commentBody);
+
     post.comments.push({
       user: session.user.id,
       username: session.user.username || session.user.email,
       email: session.user.email,
-      body: comment.trim(),
+      body: commentBody,
+      mentions: mentionedUsers.map((mentionedUser) => mentionedUser.id),
     });
     await post.save();
 
@@ -89,6 +98,19 @@ export async function POST(request, { params }) {
       });
     }
 
+    await notifyNewMentions({
+      mentionedUsers,
+      authorId: session.user.id,
+      actor: {
+        name: session.user.name || "Someone",
+        username: session.user.username,
+        profileImage: user?.profileImage || null,
+      },
+      postId: post._id.toString(),
+      postBody: commentBody,
+      context: "comment",
+    });
+
     return NextResponse.json({
       commentsCount: post.comments.length,
       latestComment: {
@@ -99,6 +121,7 @@ export async function POST(request, { params }) {
         email: latest.email,
         profileImage: user?.profileImage || null,
         body: latest.body,
+        mentionUsernames: mentionedUsers.map((mentionedUser) => mentionedUser.username),
         createdAt: latest.createdAt.toISOString(),
       },
     });

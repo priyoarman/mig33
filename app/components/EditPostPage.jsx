@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PiImageSquareBold } from "react-icons/pi";
+import ComposerTextarea from "./ComposerTextarea";
 
 const EditPostPage = ({ id, body }) => {
   const [newBody, setNewBody] = useState(body);
@@ -59,11 +60,10 @@ const EditPostPage = ({ id, body }) => {
         onSubmit={handleSubmit}
         className="mb-6 flex flex-col justify-around border-b-1 border-gray-200"
       >
-        <input
-          onChange={(e) => setNewBody(e.target.value)}
+        <ComposerTextarea
+          onChange={setNewBody}
           value={newBody}
-          className="mb-2 h-24 resize-none border-b-1 border-gray-200 bg-gray-50 px-4 py-4 outline-blue-400"
-          type="text"
+          className="mb-2 h-24 w-full resize-none border-b-1 border-gray-200 bg-gray-50 px-4 py-4 outline-blue-400"
           placeholder="What's on your mind?"
         />
         {imagePreview && (

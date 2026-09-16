@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RemoveBtn from "./RemoveBtn";
 import CommentsSection from "./CommentsSection";
+import RichText from "./RichText";
 import { HiOutlinePencilAlt } from "react-icons/hi";
 import {
   AiOutlineHeart,
@@ -27,6 +28,9 @@ export default function PostCard({ post }) {
   const [comments, setComments] = useState(post.comments || []);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [reposted, setReposted] = useState(post.repostedByMe || false);
+  const [repostsCount, setRepostsCount] = useState(post.repostsCount || 0);
+  const [isReposting, setIsReposting] = useState(false);
 
   useEffect(() => {
     setComments(post.comments || []);
@@ -111,11 +115,61 @@ export default function PostCard({ post }) {
     }
   };
 
+  const handleRepost = async () => {
+    if (!session) {
+      alert("Please log in to repost.");
+      return;
+    }
+    if (isReposting) return;
+
+    setIsReposting(true);
+    const previousReposted = reposted;
+    setReposted(!previousReposted);
+    setRepostsCount((c) => c + (previousReposted ? -1 : 1));
+
+    try {
+      const res = await fetch(`/api/posts/${post._id}/repost`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const { reposted: newReposted, repostsCount: newCount } =
+          await res.json();
+        setReposted(newReposted);
+        setRepostsCount(newCount);
+      } else {
+        setReposted(previousReposted);
+        setRepostsCount((c) => c + (previousReposted ? 1 : -1));
+      }
+    } catch {
+      setReposted(previousReposted);
+      setRepostsCount((c) => c + (previousReposted ? 1 : -1));
+    } finally {
+      setIsReposting(false);
+    }
+  };
+
   return (
     <>
       <article className="group border-default bg-panel w-full border-b transition-colors hover:bg-[rgba(15,20,25,0.01)]">
+        {post.repost && (
+          <div className="text-muted flex items-center gap-2 px-4 pt-3 text-xs font-semibold sm:px-5">
+            <AiOutlineRetweet className="text-sm" />
+            <Link
+              href={`/profile/${post.repost.byUsername}`}
+              className="hover:underline"
+            >
+              {post.repost.byUserId === session?.user?.id
+                ? "You"
+                : post.repost.byName}{" "}
+              reposted
+            </Link>
+          </div>
+        )}
         <div className="flex w-full flex-row gap-3 px-3 py-3 sm:gap-3 sm:px-4">
-          <div className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
+          <Link
+            href={`/profile/${post.authorUsername}`}
+            className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11"
+          >
             {post.authorImage ? (
               <img
                 src={post.authorImage}
@@ -129,7 +183,7 @@ export default function PostCard({ post }) {
                   : "U"}
               </span>
             )}
-          </div>
+          </Link>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
@@ -168,7 +222,10 @@ export default function PostCard({ post }) {
 
             <div className="mt-1.5">
               <p className="text-primary text-[15px] leading-6 break-words whitespace-pre-wrap">
-                {post.body}
+                <RichText
+                  text={post.body}
+                  mentionUsernames={post.mentionUsernames}
+                />
               </p>
 
               {post.images && post.images.length > 0 && (
@@ -218,14 +275,18 @@ export default function PostCard({ post }) {
                 </span>
               </button>
 
-              <div className="group flex items-center gap-1.5 rounded-full px-1.5 py-1 text-neutral-500 transition-colors hover:cursor-default hover:bg-green-500/10 hover:text-green-500">
-                <button className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-green-500/10">
+              <button
+                type="button"
+                onClick={handleRepost}
+                className={`group flex items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors ${reposted ? "text-green-600" : "text-neutral-500 hover:cursor-default hover:bg-green-500/10 hover:text-green-500"}`}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full transition-colors group-hover:cursor-pointer group-hover:bg-green-500/10">
                   <AiOutlineRetweet className="text-[18px]" />
-                </button>
-                <span className="min-w-[1.5rem] text-[13px] font-medium">
-                  0
                 </span>
-              </div>
+                <span className="min-w-[1.5rem] text-[13px] font-medium">
+                  {repostsCount}
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -263,7 +324,10 @@ export default function PostCard({ post }) {
             <div className="max-h-[calc(90vh-4.5rem)] overflow-y-auto">
               <div className="border-default bg-surface border-b p-4">
                 <div className="flex items-center gap-3">
-                  <div className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11">
+                  <Link
+                    href={`/profile/${post.authorUsername}`}
+                    className="avatar-square mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-bold text-white sm:h-11 sm:w-11"
+                  >
                     {post.authorImage ? (
                       <img
                         src={post.authorImage}
@@ -277,7 +341,7 @@ export default function PostCard({ post }) {
                           : "U"}
                       </span>
                     )}
-                  </div>
+                  </Link>
 
                   <div className="min-w-0 flex-1">
                     <div className="text-muted flex items-center gap-2 text-sm">
