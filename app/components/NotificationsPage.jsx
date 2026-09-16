@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRealtimeNotifications } from "./RealtimeProvider";
 import NotificationRowSkeletonList from "./skeletons/NotificationRowSkeleton";
+import { formatTimeAgo } from "@/lib/date";
 
 function ActorAvatar({ actor }) {
   return actor?.profileImage ? (
@@ -65,7 +66,7 @@ const NotificationsPage = () => {
                     <strong>{notification.actor?.name || "Someone"}</strong>{" "}
                     {notification.message}
                     <time className="mt-1 block text-sm text-gray-500">
-                      {new Date(notification.createdAt).toLocaleString()}
+                      {formatTimeAgo(notification.createdAt)}
                     </time>
                     {notification.postSnippet && (
                       <p className="mt-2 truncate rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-600 dark:bg-neutral-800 dark:text-neutral-300">

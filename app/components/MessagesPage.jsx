@@ -9,6 +9,7 @@ import Link from "next/link";
 import ConversationRowSkeletonList, {
   MessageBubbleSkeletonList,
 } from "./skeletons/ConversationRowSkeleton";
+import { formatTimeAgo } from "@/lib/date";
 
 const PAGE_SIZE = 30;
 
@@ -451,7 +452,7 @@ const MessagesPage = () => {
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   <span className="text-xs text-gray-400">
-                    {new Date(latestMessage.createdAt).toLocaleDateString()}
+                    {formatTimeAgo(latestMessage.createdAt)}
                   </span>
                   {unreadCount > 0 && (
                     <span className="bg-accent text-on-accent rounded-full px-1.5 text-[11px] leading-5 font-bold">

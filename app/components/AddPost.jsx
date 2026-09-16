@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { PiImageSquareBold } from "react-icons/pi";
 import { MdOutlineGifBox } from "react-icons/md";
-import { HiMiniListBullet } from "react-icons/hi2";
 import ComposerTextarea from "./ComposerTextarea";
+import GifPickerModal from "./GifPickerModal";
 
 export default function AddPost() {
   const { data: session, status } = useSession();
@@ -15,42 +15,8 @@ export default function AddPost() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gifModalOpen, setGifModalOpen] = useState(false);
-  const [gifSearchQuery, setGifSearchQuery] = useState("");
-  const [gifResults, setGifResults] = useState([]);
-  const [isGifSearching, setIsGifSearching] = useState(false);
   const [selectedGifUrl, setSelectedGifUrl] = useState(null);
   const router = useRouter();
-
-  // Ensure hooks are declared in the same order on every render
-  const searchInputRef = useRef(null);
-  useEffect(() => {
-    if (gifModalOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [gifModalOpen]);
-
-  useEffect(() => {
-    if (!gifModalOpen) return;
-    if (!gifSearchQuery.trim()) {
-      setGifResults([]);
-      return;
-    }
-    const id = setTimeout(async () => {
-      setIsGifSearching(true);
-      try {
-        const res = await fetch(
-          `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`,
-        );
-        const data = await res.json();
-        setGifResults(data.results || []);
-      } catch (err) {
-        console.error("Giphy search error:", err);
-      } finally {
-        setIsGifSearching(false);
-      }
-    }, 300);
-    return () => clearTimeout(id);
-  }, [gifSearchQuery, gifModalOpen]);
 
   if (status === "loading") return null;
   if (!session) {
@@ -78,25 +44,6 @@ export default function AddPost() {
     setImage(null);
     setImagePreview(null);
     setSelectedGifUrl(null);
-  };
-
-  // Search Giphy GIFs (kept for explicit/manual triggering if needed)
-  const searchGifs = async () => {
-    if (!gifSearchQuery.trim()) return;
-
-    setIsGifSearching(true);
-    try {
-      const res = await fetch(
-        `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`,
-      );
-      const data = await res.json();
-      setGifResults(data.results || []);
-    } catch (err) {
-      console.error("Giphy search error:", err);
-      alert("Failed to search GIFs");
-    } finally {
-      setIsGifSearching(false);
-    }
   };
 
   // Select a GIF and set it as preview
@@ -211,88 +158,11 @@ export default function AddPost() {
         </div>
       </form>
 
-      {/* GIF Search Modal */}
-      {gifModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/10 px-4 pt-16 backdrop-blur-[1px]">
-          <div className="border-default bg-panel w-full max-w-[560px] overflow-hidden rounded-[22px] border shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
-            <div className="border-default bg-surface flex items-center justify-between border-b px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-600">
-                  <MdOutlineGifBox className="text-lg" />
-                </div>
-                <h2 className="text-primary text-sm font-semibold">
-                  Search GIFs
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setGifModalOpen(false)}
-                className="hover-panel text-muted hover:text-primary flex h-8 w-8 items-center justify-center rounded-full text-xl transition"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-3">
-              <div className="border-default bg-surface flex items-center gap-2 rounded-xl border px-3 py-2">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="text-muted h-4 w-4 fill-none stroke-current"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="6" />
-                  <path d="M16 16L21 21" />
-                </svg>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={gifSearchQuery}
-                  onChange={(e) => setGifSearchQuery(e.target.value)}
-                  placeholder="Search Giphy GIFs..."
-                  className="text-primary w-full border-0 bg-transparent text-base outline-none placeholder:text-[color:var(--muted)] sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="max-h-[58vh] overflow-y-auto px-3 pb-3">
-              {isGifSearching ? (
-                <div className="flex h-36 items-center justify-center">
-                  <p className="text-muted text-sm">Searching...</p>
-                </div>
-              ) : gifResults.length === 0 ? (
-                <div className="flex h-36 items-center justify-center">
-                  <p className="text-muted text-sm">
-                    {gifSearchQuery
-                      ? "No GIFs found"
-                      : "Search for GIFs to get started"}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {gifResults.map((item, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => selectGif(item.url, item.preview)}
-                      className="border-default bg-surface group relative overflow-hidden rounded-xl border transition hover:opacity-90"
-                    >
-                      <img
-                        src={item.preview}
-                        alt={`gif-${idx}`}
-                        className="h-28 w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <GifPickerModal
+        isOpen={gifModalOpen}
+        onClose={() => setGifModalOpen(false)}
+        onSelect={selectGif}
+      />
     </>
   );
 }

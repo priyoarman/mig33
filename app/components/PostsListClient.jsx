@@ -16,6 +16,16 @@ export default function PostsListClient({
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef(null);
 
+  // router.refresh() re-runs the server component and hands us new
+  // initial* props on the same component instance; useState only reads
+  // its initial value once, so resync here or a new/deleted post never
+  // shows up until a full page reload.
+  useEffect(() => {
+    setPosts(initialPosts);
+    setHasMore(initialHasMore);
+    setCursor(initialCursor);
+  }, [initialPosts, initialHasMore, initialCursor]);
+
   const loadMore = useCallback(async () => {
     if (loading || !hasMore || !cursor) return;
     setLoading(true);
@@ -69,7 +79,7 @@ export default function PostsListClient({
             disabled={loading}
             className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
           >
-            {loading ? "Loading..." : "Show more"}
+            {loading ? "More posts incoming..." : "Show more"}
           </button>
         </div>
       )}

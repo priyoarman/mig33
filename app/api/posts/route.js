@@ -22,12 +22,12 @@ const uploadToCloudinary = (file) => {
         (error, result) => {
           if (error) return reject(error);
           return resolve(result);
-        }
+        },
       );
-      stream.end(Buffer.from(buffer))
-    })
-  })
-}
+      stream.end(Buffer.from(buffer));
+    });
+  });
+};
 
 export async function GET(request) {
   try {
@@ -36,6 +36,12 @@ export async function GET(request) {
     const before = searchParams.get("before");
     const authorId = searchParams.get("authorId");
     const limitParam = parseInt(searchParams.get("limit"), 10);
+
+    // Artificial delay so cursor-based pagination ("load more") is visibly
+    // distinguishable from the initial (server-rendered) page in the UI.
+    if (before) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
 
     const { posts, hasMore, nextCursor } = await getFeedPage({
       before,
@@ -49,7 +55,7 @@ export async function GET(request) {
     console.error("Get posts error:", error);
     return NextResponse.json(
       { error: "Failed to load posts" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,7 +67,7 @@ export async function POST(request) {
     if (!session) {
       return NextResponse.json(
         { error: "You must be signed in to create a post." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -73,7 +79,7 @@ export async function POST(request) {
     if (!body && !file && !gifUrl) {
       return NextResponse.json(
         { error: "Post cannot be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -88,7 +94,7 @@ export async function POST(request) {
         console.error("Cloudinary upload error:", error);
         return NextResponse.json(
           { error: "Failed to upload image." },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
