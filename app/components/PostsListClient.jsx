@@ -79,7 +79,7 @@ export default function PostsListClient({
             disabled={loading}
             className="rounded-full bg-cyan-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
           >
-            {loading ? "Loading more posts..." : "Show more"}
+            {loading ? "More posts incoming..." : "Show more"}
           </button>
         </div>
       )}
