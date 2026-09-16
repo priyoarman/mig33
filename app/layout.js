@@ -21,7 +21,7 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children, modal }) {
   return (
     <html lang="en">
       <body className="bg-gray-100" suppressHydrationWarning>
@@ -38,6 +38,7 @@ export default function RootLayout({ children }) {
             <SpeedInsights />
             <RightBar />
           </div>
+          {modal}
         </AuthProvider>
       </body>
     </html>

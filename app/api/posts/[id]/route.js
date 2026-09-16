@@ -40,15 +40,29 @@ export async function PUT(request, { params }) {
 
   const previousBody = post.body;
 
-  // Support both JSON body updates and multipart/form-data with an image upload
+  // Support both JSON body updates and multipart/form-data with media changes
   const contentType = request.headers.get("content-type") || "";
   if (contentType.includes("multipart/form-data")) {
-    // handle form data with possible image
+    // handle form data with possible image/gif and existing-media changes
     const data = await request.formData();
     const newBody = data.get("newBody");
     const file = data.get("image");
+    const gifUrl = data.get("gifUrl");
+    const existingImagesRaw = data.get("existingImages");
 
     if (newBody !== null) post.body = newBody;
+
+    let images = post.images || [];
+    if (existingImagesRaw !== null) {
+      try {
+        const parsed = JSON.parse(existingImagesRaw);
+        images = Array.isArray(parsed)
+          ? parsed.filter((url) => typeof url === "string")
+          : [];
+      } catch {
+        images = post.images || [];
+      }
+    }
 
     if (file && file.size) {
       // upload to cloudinary
@@ -72,13 +86,16 @@ export async function PUT(request, { params }) {
         };
 
         const uploadResult = await uploadToCloudinary(file);
-        post.images = post.images || [];
-        post.images.push(uploadResult.secure_url);
+        images.push(uploadResult.secure_url);
       } catch (err) {
         console.error("Cloudinary upload failed:", err);
         return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
       }
+    } else if (gifUrl) {
+      images.push(gifUrl);
     }
+
+    post.images = images;
   } else {
     // JSON update (no image)
     const { newBody } = await request.json();
@@ -110,7 +127,7 @@ export async function PUT(request, { params }) {
     await post.save();
   }
 
-  return NextResponse.json({ message: "Post Updated" }, { status: 200 });
+  return NextResponse.json({ message: "Post Updated", post }, { status: 200 });
 }
 
 export async function DELETE(request, { params }) {
