@@ -6,6 +6,9 @@ import { IoClose } from "react-icons/io5";
 
 const DISMISS_KEY = "ios-install-banner-dismissed";
 
+// iOS Safari exposes this non-standard flag; the DOM lib doesn't know about it.
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+
 export default function IosInstallBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -14,7 +17,7 @@ export default function IosInstallBanner() {
     const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
+      (window.navigator as NavigatorWithStandalone).standalone === true;
     const dismissed = localStorage.getItem(DISMISS_KEY) === "true";
 
     if (isIos && !isStandalone && !dismissed) {

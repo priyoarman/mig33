@@ -3,15 +3,22 @@
 import { useState, useEffect } from "react";
 import NewsRowSkeletonList from "./skeletons/NewsRowSkeleton";
 
+type NewsArticle = {
+  url: string;
+  title: string;
+  urlToImage?: string;
+  source: { name: string };
+};
+
 export default function News() {
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [articleNum, setArticleNum] = useState(3);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/news?country=us&category=business")
       .then((res) => res.json())
-      .then((data) =>
+      .then((data: { articles?: NewsArticle[] }) =>
         setNews(Array.isArray(data.articles) ? data.articles : []),
       )
       .catch((error) => {

@@ -10,15 +10,15 @@ import { IoLogOut } from "react-icons/io5";
 import ThemeToggle from "./ThemeToggle";
 import PushNotificationToggle from "./PushNotificationToggle";
 
-const MiniProfile = ({ compact = false }) => {
+const MiniProfile = ({ compact = false }: { compact?: boolean }) => {
   const { data: session, status } = useSession();
   const user = session?.user;
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    function handleOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("click", handleOutside);
     return () => document.removeEventListener("click", handleOutside);

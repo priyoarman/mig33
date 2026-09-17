@@ -15,13 +15,21 @@ import { IoNotifications } from "react-icons/io5";
   
 import MiniProfile from "./MiniProfile";
 import { useRealtimeNotifications } from "./RealtimeProvider";
+import type { ReactNode } from "react";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  className?: string;
+};
 
 const LeftBar = () => {
   const { status } = useSession();
   const { unreadCount, messageUnreadCount } = useRealtimeNotifications();
   const profileHref = status === "authenticated" ? "/profile" : "/login";
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       href: "/",
       label: "Home",
@@ -96,7 +104,7 @@ const LeftBar = () => {
             />
           </Link>
 
-          {navItems.map(({ href, label, icon, className }) => (
+          {navItems.map(({ href, label, icon, className = "" }) => (
             <Link
               key={label}
               href={href}
@@ -119,7 +127,7 @@ const LeftBar = () => {
         aria-label="Mobile navigation"
         className="bg-panel text-primary fixed inset-x-0 bottom-0 z-50 flex flex-row items-center justify-around px-4 py-2 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] sm:hidden"
       >
-        {navItems.map(({ href, label, icon, className }) => (
+        {navItems.map(({ href, label, icon, className = "" }) => (
           <Link
             key={label}
             href={href}
