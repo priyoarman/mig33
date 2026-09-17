@@ -8,23 +8,32 @@ import { useSession } from "next-auth/react";
 import { MdClose } from "react-icons/md";
 import SuggestedUserRowSkeletonList from "./skeletons/SuggestedUserRowSkeleton";
 
+type SuggestedUser = {
+  _id: string;
+  name: string;
+  username: string;
+  profileImage?: string | null;
+  isFollowing: boolean;
+  followersCount: number;
+};
+
 const RightBarBottom = () => {
   const router = useRouter();
   const { data: session } = useSession();
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingIds, setPendingIds] = useState(new Set());
-  const [removingIds, setRemovingIds] = useState(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   // FIFO queue of dismissed user objects, oldest-removed first. Once fresh
   // suggestions run out, the oldest dismissed user cycles back into view.
-  const [dismissedQueue, setDismissedQueue] = useState([]);
+  const [dismissedQueue, setDismissedQueue] = useState<SuggestedUser[]>([]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
         setLoading(true);
         const res = await fetch("/api/users/suggestions");
-        const data = await res.json();
+        const data = (await res.json()) as { users?: SuggestedUser[] };
         setUsers(Array.isArray(data.users) ? data.users : []);
       } catch (error) {
         console.error("Failed to fetch suggested users:", error);
@@ -38,7 +47,7 @@ const RightBarBottom = () => {
     fetchSuggestions();
   }, [session?.user?.id]);
 
-  const handleRemove = async (userId) => {
+  const handleRemove = async (userId: string) => {
     setRemovingIds((prev) => new Set(prev).add(userId));
 
     const removedUser = users.find((u) => u._id === userId);
@@ -59,8 +68,10 @@ const RightBarBottom = () => {
         `/api/users/suggestions?exclude=${Array.from(excludeIds).join(",")}&limit=1`,
         { cache: "no-store" },
       );
-      const data = await res.json();
-      let replacement = Array.isArray(data.users) ? data.users[0] : null;
+      const data = (await res.json()) as { users?: SuggestedUser[] };
+      let replacement: SuggestedUser | null = Array.isArray(data.users)
+        ? data.users[0]
+        : null;
       let finalQueue = nextQueue;
 
       if (!replacement && nextQueue.length > 0) {
@@ -88,7 +99,7 @@ const RightBarBottom = () => {
     }
   };
 
-  const handleFollow = async (userId) => {
+  const handleFollow = async (userId: string) => {
     if (!session?.user?.id) return;
 
     setPendingIds((prev) => new Set(prev).add(userId));
@@ -97,7 +108,7 @@ const RightBarBottom = () => {
       const res = await fetch(`/api/users/${userId}/follow`, {
         method: "POST",
       });
-      const data = await res.json();
+      const data = (await res.json()) as { following?: boolean; error?: string };
 
       if (!res.ok) {
         throw new Error(data?.error || "Unable to update follow status");
@@ -116,7 +127,9 @@ const RightBarBottom = () => {
         `/api/users/suggestions${excludeParam}`,
         { cache: "no-store" },
       );
-      const suggestionsData = await suggestionsRes.json();
+      const suggestionsData = (await suggestionsRes.json()) as {
+        users?: SuggestedUser[];
+      };
       setUsers(
         suggestionsRes.ok && Array.isArray(suggestionsData.users)
           ? suggestionsData.users

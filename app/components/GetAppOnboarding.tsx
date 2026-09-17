@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -13,9 +13,20 @@ import {
   IoPhonePortraitOutline,
   IoCopyOutline,
 } from "react-icons/io5";
-import { getPlatform, isStandalone } from "@/lib/push-client";
+import { getPlatform, isStandalone, type Platform } from "@/lib/push-client";
 
-function detectInAppBrowser(ua) {
+type OnboardingState = {
+  platform: Platform;
+  inApp: boolean;
+  standalone: boolean;
+};
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+function detectInAppBrowser(ua: string) {
   const knownApps =
     /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp\/|TikTok|musical_ly|Snapchat|LinkedInApp|Twitter/i;
   if (knownApps.test(ua)) return true;
@@ -35,8 +46,9 @@ function detectInAppBrowser(ua) {
 
 export default function GetAppOnboarding() {
   const { status } = useSession();
-  const [state, setState] = useState(null);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [state, setState] = useState<OnboardingState | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [justInstalled, setJustInstalled] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -48,9 +60,9 @@ export default function GetAppOnboarding() {
       standalone: isStandalone(),
     });
 
-    const onBeforeInstallPrompt = (e) => {
+    const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     const onAppInstalled = () => setJustInstalled(true);
 
@@ -89,7 +101,7 @@ export default function GetAppOnboarding() {
     setDeferredPrompt(null);
   };
 
-  const Shell = ({ children }) => (
+  const Shell = ({ children }: { children?: ReactNode }) => (
     <div className="bg-app fixed inset-0 z-50 flex w-full flex-col items-center justify-center px-6">
       <div className="bg-panel border-default max-h-full w-full max-w-md overflow-y-auto rounded-2xl border p-6 text-center">
         <div className="mb-4 flex justify-center">

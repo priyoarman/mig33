@@ -1,4 +1,4 @@
-type Platform = "desktop" | "ios" | "android";
+export type Platform = "desktop" | "ios" | "android";
 
 // iOS Safari exposes this non-standard flag; the DOM lib doesn't know about it.
 type NavigatorWithStandalone = Navigator & { standalone?: boolean };
