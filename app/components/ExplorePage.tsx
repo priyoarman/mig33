@@ -11,7 +11,7 @@ import PostCard from "./PostCard";
 import PostsListClient from "./PostsListClient";
 import PostCardSkeletonList from "./skeletons/PostCardSkeleton";
 import SearchUserRowSkeletonList from "./skeletons/SearchUserRowSkeleton";
-import type { ISearchHistory, PostSummary, UserProfile } from "@/types";
+import type { ISearchHistory, PostSummary, SearchUserResult } from "@/types";
 import type { TrendingHashtag } from "@/lib/hashtags";
 
 type TabKey = "search" | "trending" | "following";
@@ -21,13 +21,6 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "trending", label: "Trending" },
   { key: "following", label: "For You" },
 ];
-
-type SearchUserResult = Pick<
-  UserProfile,
-  "_id" | "username" | "name" | "profileImage" | "bio"
-> & {
-  followers?: unknown[];
-};
 
 function ExploreSearchTab({ isAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();

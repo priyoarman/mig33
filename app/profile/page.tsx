@@ -5,14 +5,39 @@ import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import { getFeedPage, DEFAULT_FEED_PAGE_SIZE } from "@/lib/posts";
 import { redirect } from "next/navigation";
+import type { Types } from "mongoose";
+import type { UserProfile } from "@/types";
 
-const serializeConnections = (users = []) =>
-  users.filter(Boolean).map((user) => ({
-    _id: user._id.toString(),
-    name: user.name || "User",
-    username: user.username || "username",
-    profileImage: user.profileImage || null,
-  }));
+type PopulatedConnectionUser = {
+  _id: Types.ObjectId;
+  name?: string;
+  username?: string;
+  profileImage?: string | null;
+};
+
+type PopulatedProfileUser = {
+  name?: string;
+  username?: string;
+  bio?: string;
+  website?: string;
+  profileImage?: string | null;
+  coverImage?: string | null;
+  followers?: PopulatedConnectionUser[];
+  following?: PopulatedConnectionUser[];
+  createdAt?: Date;
+};
+
+const serializeConnections = (
+  users: (PopulatedConnectionUser | null | undefined)[] = [],
+): UserProfile[] =>
+  users
+    .filter((user): user is PopulatedConnectionUser => Boolean(user))
+    .map((user) => ({
+      _id: user._id.toString(),
+      name: user.name || "User",
+      username: user.username || "username",
+      profileImage: user.profileImage || null,
+    }));
 
 const Profile = async () => {
   const session = await getServerSession(authOptions);
@@ -34,7 +59,7 @@ const Profile = async () => {
       )
       .populate("followers", "_id name username profileImage")
       .populate("following", "_id name username profileImage")
-      .lean(),
+      .lean() as unknown as Promise<PopulatedProfileUser | null>,
   ]);
 
   const profileStats = {
@@ -50,7 +75,7 @@ const Profile = async () => {
   const profileUser = currentUser
     ? {
         _id: session.user.id,
-        name: currentUser.name || session.user.name,
+        name: currentUser.name || session.user.name || undefined,
         username: currentUser.username || session.user.username,
         bio: currentUser.bio || "",
         website: currentUser.website || "",
@@ -59,7 +84,7 @@ const Profile = async () => {
       }
     : {
         _id: session.user.id,
-        name: session.user.name,
+        name: session.user.name ?? undefined,
         username: session.user.username,
         bio: "",
         website: "",

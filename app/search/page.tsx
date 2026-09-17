@@ -13,13 +13,16 @@ import PostCard from "../components/PostCard";
 import { BsSearch } from "react-icons/bs";
 import PostCardSkeletonList from "../components/skeletons/PostCardSkeleton";
 import SearchUserRowSkeletonList from "../components/skeletons/SearchUserRowSkeleton";
+import type { PostSummary, SearchUserResult } from "@/types";
+
+type ResultsTab = "all" | "posts" | "users";
 
 const SearchResults = () => {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  const [activeTab, setActiveTab] = useState("all"); // all, posts, users
-  const [posts, setPosts] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState<ResultsTab>("all");
+  const [posts, setPosts] = useState<PostSummary[]>([]);
+  const [users, setUsers] = useState<SearchUserResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,8 +49,8 @@ const SearchResults = () => {
           }),
         ]);
 
-        const postsData = await postsRes.json();
-        const usersData = await usersRes.json();
+        const postsData = (await postsRes.json()) as { posts?: PostSummary[] };
+        const usersData = (await usersRes.json()) as { users?: SearchUserResult[] };
 
         if (!postsRes.ok) {
           console.error("Posts error:", postsData);
@@ -63,7 +66,7 @@ const SearchResults = () => {
           setUsers(Array.isArray(usersData.users) ? usersData.users : []);
         }
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error("Search error:", err);
         setError("Failed to fetch search results");
       } finally {
