@@ -4,12 +4,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request) {
   try {
     await connectMongoDB();
 
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
+
+    const { searchParams } = new URL(request.url);
+    const excludeIds = (searchParams.get("exclude") || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit"), 10) || 3, 1),
+      20,
+    );
 
     const currentUser = currentUserId
       ? await User.findById(currentUserId).select("following").lean()
@@ -20,10 +30,16 @@ export async function GET() {
         : [],
     );
 
-    const query = currentUserId
+    const excludedIds = new Set([
+      ...(currentUserId ? [currentUserId] : []),
+      ...currentUserFollowing,
+      ...excludeIds,
+    ]);
+
+    const query = excludedIds.size
       ? {
           _id: {
-            $nin: [currentUserId, ...currentUserFollowing],
+            $nin: Array.from(excludedIds),
           },
         }
       : {};
@@ -31,7 +47,7 @@ export async function GET() {
     const users = await User.find(query)
       .select("_id name username profileImage followers following")
       .sort({ createdAt: -1 })
-      .limit(3)
+      .limit(limit)
       .lean();
 
     const suggestionList = users.map((user) => {

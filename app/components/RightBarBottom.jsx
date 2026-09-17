@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { MdClose } from "react-icons/md";
 import SuggestedUserRowSkeletonList from "./skeletons/SuggestedUserRowSkeleton";
 
 const RightBarBottom = () => {
@@ -13,6 +14,10 @@ const RightBarBottom = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pendingIds, setPendingIds] = useState(new Set());
+  const [removingIds, setRemovingIds] = useState(new Set());
+  // FIFO queue of dismissed user objects, oldest-removed first. Once fresh
+  // suggestions run out, the oldest dismissed user cycles back into view.
+  const [dismissedQueue, setDismissedQueue] = useState([]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -29,8 +34,59 @@ const RightBarBottom = () => {
       }
     };
 
+    setDismissedQueue([]);
     fetchSuggestions();
   }, [session?.user?.id]);
+
+  const handleRemove = async (userId) => {
+    setRemovingIds((prev) => new Set(prev).add(userId));
+
+    const removedUser = users.find((u) => u._id === userId);
+    const remainingUsers = users.filter((u) => u._id !== userId);
+    const nextQueue = removedUser
+      ? [...dismissedQueue, removedUser]
+      : dismissedQueue;
+
+    setUsers(remainingUsers);
+    setDismissedQueue(nextQueue);
+
+    try {
+      const excludeIds = new Set([
+        ...remainingUsers.map((u) => u._id),
+        ...nextQueue.map((u) => u._id),
+      ]);
+      const res = await fetch(
+        `/api/users/suggestions?exclude=${Array.from(excludeIds).join(",")}&limit=1`,
+        { cache: "no-store" },
+      );
+      const data = await res.json();
+      let replacement = Array.isArray(data.users) ? data.users[0] : null;
+      let finalQueue = nextQueue;
+
+      if (!replacement && nextQueue.length > 0) {
+        // No fresh users left — loop the oldest dismissed user back in.
+        replacement = nextQueue[0];
+        finalQueue = nextQueue.slice(1);
+      }
+
+      if (replacement) {
+        setUsers((currentUsers) =>
+          currentUsers.some((u) => u._id === replacement._id)
+            ? currentUsers
+            : [...currentUsers, replacement],
+        );
+        setDismissedQueue(finalQueue);
+      }
+    } catch (error) {
+      console.error("Failed to fetch a replacement suggestion:", error);
+    } finally {
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    }
+  };
 
   const handleFollow = async (userId) => {
     if (!session?.user?.id) return;
@@ -53,9 +109,13 @@ const RightBarBottom = () => {
         );
       }
 
-      const suggestionsRes = await fetch("/api/users/suggestions", {
-        cache: "no-store",
-      });
+      const excludeParam = dismissedQueue.length
+        ? `?exclude=${dismissedQueue.map((u) => u._id).join(",")}`
+        : "";
+      const suggestionsRes = await fetch(
+        `/api/users/suggestions${excludeParam}`,
+        { cache: "no-store" },
+      );
       const suggestionsData = await suggestionsRes.json();
       setUsers(
         suggestionsRes.ok && Array.isArray(suggestionsData.users)
@@ -124,23 +184,34 @@ const RightBarBottom = () => {
                   </div>
                 </Link>
 
-                <button
-                  onClick={() => handleFollow(user._id)}
-                  disabled={isDisabled}
-                  className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-white transition text-shadow-xs ${
-                    user.isFollowing
-                      ? "bg-cyan-500 hover:bg-cyan-600"
-                      : "bg-gray-500 hover:bg-cyan-500"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  {pendingIds.has(user._id)
-                    ? "..."
-                    : user.isFollowing
-                      ? "Following"
-                      : session?.user?.id
-                        ? "Follow"
-                        : "Login!"}
-                </button>
+                <div className="flex flex-none items-center gap-2">
+                  <button
+                    onClick={() => handleFollow(user._id)}
+                    disabled={isDisabled}
+                    className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-white transition text-shadow-xs ${
+                      user.isFollowing
+                        ? "bg-cyan-500 hover:bg-cyan-600"
+                        : "bg-gray-500 hover:bg-cyan-500"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {pendingIds.has(user._id)
+                      ? "..."
+                      : user.isFollowing
+                        ? "Following"
+                        : session?.user?.id
+                          ? "Follow"
+                          : "Login!"}
+                  </button>
+
+                  <button
+                    onClick={() => handleRemove(user._id)}
+                    disabled={removingIds.has(user._id)}
+                    aria-label={`Remove ${user.name} from suggestions`}
+                    className="text-muted flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-full transition hover:bg-neutral-500/20 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <MdClose size={16} />
+                  </button>
+                </div>
               </div>
             );
           })}
