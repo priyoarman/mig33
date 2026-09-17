@@ -1,10 +1,45 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { useSession } from "next-auth/react";
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
+import type { INotification } from "@/types";
 
-const RealtimeContext = createContext({
+type NotificationActor = {
+  name: string;
+  username?: string;
+  profileImage?: string | null;
+};
+
+type NotificationItem = {
+  id: string;
+  type: INotification["type"];
+  message: string;
+  actor: NotificationActor;
+  postId?: string | null;
+  postSnippet?: string | null;
+  createdAt: string;
+};
+
+type RealtimeContextValue = {
+  notifications: NotificationItem[];
+  notificationsLoading: boolean;
+  unreadCount: number;
+  messageUnreadCount: number;
+  socket: Socket | null;
+  socketError: string;
+  clearUnread: () => void;
+  markConversationRead: (otherUserId: string | null | undefined) => Promise<number>;
+};
+
+const RealtimeContext = createContext<RealtimeContextValue>({
   notifications: [],
   notificationsLoading: true,
   unreadCount: 0,
@@ -12,16 +47,16 @@ const RealtimeContext = createContext({
   socket: null,
   socketError: "",
   clearUnread: () => {},
-  markConversationRead: () => {},
+  markConversationRead: () => Promise.resolve(0),
 });
 
-export function RealtimeProvider({ children }) {
+export function RealtimeProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
-  const [socket, setSocket] = useState(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [socketError, setSocketError] = useState("");
 
   useEffect(() => {
@@ -35,7 +70,7 @@ export function RealtimeProvider({ children }) {
 
     fetch("/api/notifications")
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
+      .then((data: { notifications?: NotificationItem[]; unreadCount?: number } | null) => {
         if (!data) return;
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
@@ -45,7 +80,7 @@ export function RealtimeProvider({ children }) {
 
     fetch("/api/messages")
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
+      .then((data: { unreadTotal?: number } | null) => {
         if (!data) return;
         setMessageUnreadCount(data.unreadTotal || 0);
       })
@@ -66,7 +101,7 @@ export function RealtimeProvider({ children }) {
     const loadNotifications = () => {
       fetch("/api/notifications")
         .then((response) => (response.ok ? response.json() : null))
-        .then((data) => {
+        .then((data: { notifications?: NotificationItem[]; unreadCount?: number } | null) => {
           if (!data) return;
           setNotifications((current) => {
             // Freshly-fetched notifications are authoritative; they must be
@@ -76,7 +111,10 @@ export function RealtimeProvider({ children }) {
             return [
               ...new Map(merged.map((item) => [item.id, item])).values(),
             ]
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .sort(
+                (a, b) =>
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+              )
               .slice(0, 50);
           });
           setUnreadCount(data.unreadCount || 0);
@@ -97,7 +135,7 @@ export function RealtimeProvider({ children }) {
     socket.on("disconnect", handleSocketError);
     socket.on("connect", handleSocketConnect);
 
-    socket.on("notification", (notification) => {
+    socket.on("notification", (notification: NotificationItem) => {
       setNotifications((current) => [notification, ...current].slice(0, 50));
       setUnreadCount((current) => current + 1);
     });
@@ -117,7 +155,7 @@ export function RealtimeProvider({ children }) {
     };
   }, [session?.user?.id, status]);
 
-  const markConversationRead = useCallback((otherUserId) => {
+  const markConversationRead = useCallback((otherUserId: string | null | undefined) => {
     if (!otherUserId) return Promise.resolve(0);
     return fetch("/api/messages", {
       method: "PATCH",
@@ -125,7 +163,7 @@ export function RealtimeProvider({ children }) {
       body: JSON.stringify({ userId: otherUserId }),
     })
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
+      .then((data: { markedCount?: number } | null) => {
         const marked = data?.markedCount || 0;
         if (marked > 0) {
           setMessageUnreadCount((current) => Math.max(0, current - marked));

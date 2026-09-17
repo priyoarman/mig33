@@ -5,13 +5,31 @@ import { PiImageSquareBold } from "react-icons/pi";
 import { MdOutlineGifBox } from "react-icons/md";
 import ComposerTextarea from "./ComposerTextarea";
 import GifPickerModal from "./GifPickerModal";
+import type { PostSummary } from "@/types";
 
-export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
+type EditablePost = Pick<PostSummary, "_id" | "body" | "images">;
+type UpdatedPost = Pick<PostSummary, "body" | "images"> | null | undefined;
+
+type EditPostModalProps = {
+  post: EditablePost;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdated: (updatedPost: UpdatedPost) => void;
+};
+
+export default function EditPostModal({
+  post,
+  isOpen,
+  onClose,
+  onUpdated,
+}: EditPostModalProps) {
   const [newBody, setNewBody] = useState(post?.body || "");
-  const [existingImages, setExistingImages] = useState(post?.images || []);
-  const [newImage, setNewImage] = useState(null);
-  const [newImagePreview, setNewImagePreview] = useState(null);
-  const [selectedGifUrl, setSelectedGifUrl] = useState(null);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    post?.images || [],
+  );
+  const [newImage, setNewImage] = useState<File | null>(null);
+  const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
+  const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null);
   const [gifModalOpen, setGifModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,8 +45,8 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
 
   if (!isOpen) return null;
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setNewImage(file);
       setNewImagePreview(URL.createObjectURL(file));
@@ -42,18 +60,18 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
     setSelectedGifUrl(null);
   };
 
-  const removeExistingImage = (url) => {
+  const removeExistingImage = (url: string) => {
     setExistingImages((prev) => prev.filter((image) => image !== url));
   };
 
-  const selectGif = (gifUrl, previewUrl) => {
+  const selectGif = (gifUrl: string, previewUrl?: string) => {
     setSelectedGifUrl(gifUrl);
     setNewImagePreview(previewUrl || gifUrl);
     setNewImage(null);
     setGifModalOpen(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (
       !newBody.trim() &&
@@ -78,7 +96,7 @@ export default function EditPostModal({ post, isOpen, onClose, onUpdated }) {
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to update post");
-      const data = await res.json();
+      const data = (await res.json()) as { post?: UpdatedPost };
       onUpdated(data.post);
     } catch (error) {
       console.error(error);

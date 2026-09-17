@@ -13,6 +13,21 @@ export interface PostComment {
   createdAt?: string;
 }
 
+// The flattened shape actually returned by getPostWithComments() and the
+// /api/posts/[id]/comments endpoints (distinct from PostComment above,
+// which models the raw embedded-document shape).
+export interface CommentListItem {
+  id: Id;
+  userId?: string | null;
+  name: string;
+  username: string;
+  email?: string;
+  profileImage?: string | null;
+  body: string;
+  mentionUsernames?: string[];
+  createdAt: string;
+}
+
 export interface RepostInfo {
   byUserId: Id;
   byName: string;
