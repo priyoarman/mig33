@@ -11,11 +11,11 @@ export function formatTimeAgo(date: Date | string | number): string {
   const diffMonths = Math.floor(diffDays / 30);
   const diffYears = Math.floor(diffDays / 365);
 
-  if (diffYears >= 1) return `${diffYears}y ago`;
-  if (diffMonths >= 1) return `${diffMonths}mo ago`;
-  if (diffWeeks >= 1) return `${diffWeeks}w ago`;
-  if (diffDays >= 1) return `${diffDays}d ago`;
-  if (diffHours >= 1) return `${diffHours}h ago`;
-  if (diffMinutes >= 1) return `${diffMinutes}m ago`;
+  if (diffYears >= 1) return `${diffYears}y`;
+  if (diffMonths >= 1) return `${diffMonths}mo`;
+  if (diffWeeks >= 1) return `${diffWeeks}w`;
+  if (diffDays >= 1) return `${diffDays}d`;
+  if (diffHours >= 1) return `${diffHours}h`;
+  if (diffMinutes >= 1) return `${diffMinutes}m`;
   return "Just now";
 }

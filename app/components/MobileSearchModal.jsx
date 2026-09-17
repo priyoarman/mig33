@@ -5,35 +5,24 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BsSearch } from "react-icons/bs";
 import { MdClose } from "react-icons/md";
-import Link from "next/link";
 import Image from "next/image";
 import SearchUserRowSkeletonList from "./skeletons/SearchUserRowSkeleton";
 
-export default function SearchBar() {
+export default function MobileSearchModal({ isOpen, onClose }) {
   const { status } = useSession();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState({ posts: [], users: [] });
   const [isSearching, setIsSearching] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all, posts, users
-  const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
   const abortRef = useRef(null);
-  const router = useRouter();
 
-  // Debounced search
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSuggestions({ posts: [], users: [] });
-      abortRef.current?.abort();
-      return;
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
     }
-
-    const timer = setTimeout(() => {
-      fetchSuggestions(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [isOpen]);
 
   const fetchSuggestions = useCallback(async (query) => {
     abortRef.current?.abort();
@@ -65,11 +54,30 @@ export default function SearchBar() {
     }
   }, []);
 
-  const handleSearch = async (query) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!searchQuery.trim()) {
+      setSuggestions({ posts: [], users: [] });
+      abortRef.current?.abort();
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchSuggestions(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isOpen, fetchSuggestions]);
+
+  const closeAndReset = useCallback(() => {
+    setSearchQuery("");
+    setSuggestions({ posts: [], users: [] });
+    setActiveTab("all");
+    onClose();
+  }, [onClose]);
+
+  const handleSearch = (query) => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    // Save to search history (signed-in users only)
     if (status === "authenticated") {
       fetch("/api/search/history", {
         method: "POST",
@@ -78,9 +86,8 @@ export default function SearchBar() {
       }).catch((error) => console.error("Error saving search history:", error));
     }
 
-    setSearchQuery("");
-    setShowDropdown(false);
     router.push(`/explore?tab=search&q=${encodeURIComponent(trimmed)}`);
+    closeAndReset();
   };
 
   const handleSelectSuggestion = (suggestion, type) => {
@@ -89,115 +96,105 @@ export default function SearchBar() {
     } else if (type === "post") {
       router.push(`/posts/${suggestion._id}/comments`);
     }
-    setSearchQuery("");
-    setShowDropdown(false);
+    closeAndReset();
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  if (!isOpen) return null;
 
   const displayPosts = suggestions.posts || [];
   const displayUsers = suggestions.users || [];
 
   return (
-    <div className="relative w-full" ref={searchRef}>
-      <div className="flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-4 py-2 focus-within:border-cyan-400 dark:border-neutral-700 dark:bg-neutral-900">
-        <BsSearch className="text-neutral-500 dark:text-neutral-400" />
-        <input
-          type="text"
-          placeholder="Search for posts, users, hashtags..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowDropdown(true);
-          }}
-          onKeyPress={(e) => {
-            if (e.key === "Enter") {
-              handleSearch(searchQuery);
-            }
-          }}
-          onFocus={() => setShowDropdown(true)}
-          className="ml-3 w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-500 dark:text-neutral-100 dark:placeholder:text-neutral-400"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSuggestions([]);
-              setShowDropdown(false);
-            }}
-            className="ml-2 cursor-pointer text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-          >
-            <MdClose size={20} />
-          </button>
-        )}
-      </div>
-
-      {/* Search Dropdown */}
-      {showDropdown && searchQuery.trim() && (
-        <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
-          {isSearching ? (
-            <div className="p-2">
-              <SearchUserRowSkeletonList count={3} />
+    <div
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-black/10 px-4 pt-16 backdrop-blur-[1px]"
+      onClick={closeAndReset}
+    >
+      <div
+        className="border-default bg-panel flex max-h-[80vh] w-full max-w-[560px] flex-col overflow-hidden rounded-[22px] border shadow-[0_20px_50px_rgba(15,23,42,0.18)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-default bg-surface flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-600">
+              <BsSearch className="text-sm" />
             </div>
+            <h2 className="text-primary text-sm font-semibold">Search</h2>
+          </div>
+          <button
+            type="button"
+            onClick={closeAndReset}
+            className="hover-panel text-muted hover:text-primary flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xl transition"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div className="p-3">
+          <div className="border-default bg-surface flex items-center gap-2 rounded-xl border px-3 py-2">
+            <BsSearch className="text-muted h-4 w-4 shrink-0" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search for posts, users, hashtags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch(searchQuery);
+              }}
+              className="text-primary w-full border-0 bg-transparent text-base outline-none placeholder:text-[color:var(--muted)] sm:text-sm"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSuggestions({ posts: [], users: [] });
+                }}
+                className="text-muted hover:text-primary shrink-0 cursor-pointer"
+              >
+                <MdClose size={20} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="max-h-[58vh] overflow-y-auto px-3 pb-3">
+          {!searchQuery.trim() ? (
+            <div className="text-muted p-4 text-center text-sm">
+              Search for posts, users, and hashtags
+            </div>
+          ) : isSearching ? (
+            <SearchUserRowSkeletonList count={3} />
           ) : (
             <>
-              {/* Tabs */}
-              <div className="sticky top-0 flex border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
-                <button
-                  onClick={() => setActiveTab("all")}
-                  className={`flex-1 cursor-pointer px-4 py-2 text-center text-sm font-semibold ${
-                    activeTab === "all"
-                      ? "border-b-2 border-blue-500 text-blue-500"
-                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setActiveTab("posts")}
-                  className={`flex-1 cursor-pointer px-4 py-2 text-center text-sm font-semibold ${
-                    activeTab === "posts"
-                      ? "border-b-2 border-blue-500 text-blue-500"
-                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                  }`}
-                >
-                  Posts
-                </button>
-                <button
-                  onClick={() => setActiveTab("users")}
-                  className={`flex-1 cursor-pointer px-4 py-2 text-center text-sm font-semibold ${
-                    activeTab === "users"
-                      ? "border-b-2 border-blue-500 text-blue-500"
-                      : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                  }`}
-                >
-                  Users
-                </button>
+              <div className="border-default bg-panel sticky top-0 flex border-b">
+                {["all", "posts", "users"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 cursor-pointer px-4 py-2 text-center text-sm font-semibold capitalize ${
+                      activeTab === tab
+                        ? "border-b-2 border-blue-500 text-blue-500"
+                        : "text-muted hover:text-primary"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
 
-              {/* Results */}
-              <div className="p-2">
+              <div className="pt-2">
                 {(activeTab === "all" || activeTab === "posts") &&
                   displayPosts.length > 0 && (
                     <>
-                      <div className="px-4 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                      <div className="text-muted px-4 py-2 text-xs font-semibold">
                         POSTS
                       </div>
                       {displayPosts.map((post) => (
                         <button
                           key={post._id}
                           onClick={() => handleSelectSuggestion(post, "post")}
-                          className="flex w-full cursor-pointer items-center gap-3 rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                          className="hover-panel flex w-full cursor-pointer items-center gap-3 rounded px-4 py-2 text-left text-sm"
                         >
                           <div className="avatar-square h-8 w-8 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
                             {post.authorImage && (
@@ -211,10 +208,8 @@ export default function SearchBar() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-neutral-900 dark:text-neutral-100">
-                              {post.body}
-                            </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            <p className="text-primary truncate">{post.body}</p>
+                            <p className="text-muted text-xs">
                               by @{post.authorUsername}
                             </p>
                           </div>
@@ -226,14 +221,14 @@ export default function SearchBar() {
                 {(activeTab === "all" || activeTab === "users") &&
                   displayUsers.length > 0 && (
                     <>
-                      <div className="px-4 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                      <div className="text-muted px-4 py-2 text-xs font-semibold">
                         USERS
                       </div>
                       {displayUsers.map((user) => (
                         <button
                           key={user._id}
                           onClick={() => handleSelectSuggestion(user, "user")}
-                          className="flex w-full cursor-pointer items-center gap-3 rounded px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                          className="hover-panel flex w-full cursor-pointer items-center gap-3 rounded px-4 py-2 text-left text-sm"
                         >
                           <div className="avatar-square h-8 w-8 shrink-0 overflow-hidden rounded-full">
                             {user.profileImage ? (
@@ -251,10 +246,10 @@ export default function SearchBar() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold">
+                            <p className="text-primary truncate font-semibold">
                               {user.name}
                             </p>
-                            <p className="truncate text-xs text-neutral-500">
+                            <p className="text-muted truncate text-xs">
                               @{user.username}
                             </p>
                           </div>
@@ -266,25 +261,24 @@ export default function SearchBar() {
                 {!isSearching &&
                   displayPosts.length === 0 &&
                   displayUsers.length === 0 && (
-                    <div className="p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                    <div className="text-muted p-4 text-center text-sm">
                       No results found
                     </div>
                   )}
               </div>
 
-              {/* Search Button */}
-              <div className="border-t border-gray-200 p-2 dark:border-gray-700">
+              <div className="border-default border-t p-2">
                 <button
                   onClick={() => handleSearch(searchQuery)}
                   className="w-full cursor-pointer rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
                 >
-                  Search for "{searchQuery}"
+                  Search for &quot;{searchQuery}&quot;
                 </button>
               </div>
             </>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
-import MiniProfile from "./MiniProfile";
+import { BsSearch } from "react-icons/bs";
 import ThemeToggle from "./ThemeToggle";
+import MobileSearchModal from "./MobileSearchModal";
 
 export default function MobileTopBar() {
-  const { status } = useSession();
-  const profileHref = status === "authenticated" ? "/profile" : "/login";
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="border-default bg-panel sticky top-0 z-40 border-b sm:hidden">
@@ -27,10 +27,17 @@ export default function MobileTopBar() {
           />
         </Link>
 
-        <Link href={profileHref} className="flex items-center justify-center">
-          <MiniProfile compact />
-        </Link>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-xl transition hover:bg-neutral-200 dark:hover:bg-neutral-800"
+          aria-label="Search"
+        >
+          <BsSearch />
+        </button>
       </div>
+
+      <MobileSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

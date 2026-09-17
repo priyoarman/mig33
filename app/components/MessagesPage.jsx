@@ -107,7 +107,8 @@ const MessagesPage = () => {
         `/api/messages?userId=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}`,
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load messages");
+      if (!response.ok)
+        throw new Error(data.error || "Unable to load messages");
       // A newer conversation open/switch happened while this was in flight;
       // discard this stale response instead of overwriting the newer state.
       if (requestId !== conversationRequestRef.current) return;
@@ -136,7 +137,8 @@ const MessagesPage = () => {
   }, [status]);
 
   const loadOlderMessages = async () => {
-    if (!activeUser || loadingOlder || !hasMoreOlder || !messages.length) return;
+    if (!activeUser || loadingOlder || !hasMoreOlder || !messages.length)
+      return;
     setLoadingOlder(true);
     const oldest = messages[0];
     const container = scrollContainerRef.current;
@@ -364,7 +366,9 @@ const MessagesPage = () => {
         clearTimeout(timeout);
         setSending(false);
         if (!result?.message || result.error) {
-          markFailed(result?.error || "Message could not be sent. Please try again.");
+          markFailed(
+            result?.error || "Message could not be sent. Please try again.",
+          );
           return;
         }
         markSent(result.message);
@@ -387,195 +391,205 @@ const MessagesPage = () => {
     );
 
   return (
-    <div className="bg-panel text-primary flex min-h-screen w-full flex-col border-r border-gray-200">
-      <header className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center gap-3 py-1">
-          <Link
-            href={activeUser ? "/messages" : "/"}
-            aria-label={activeUser ? "Back to conversations" : "Go home"}
-            onClick={() => {
-              if (activeUser) {
-                setActiveUser(null);
-                setMessages([]);
-                setLoading(false);
-              }
-            }}
-            className="hover-accent rounded-full px-2 text-2xl"
-          >
-            ←
-          </Link>
-          <div className="flex-1">
+    <div className="reddit-main-column bg-panel text-primary">
+      <div className="border-default flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden border-r pb-[calc(4rem+env(safe-area-inset-bottom))] sm:h-screen sm:pb-0">
+        {!activeUser && (
+          <div className="border-default bg-panel bg-opacity-80 sticky top-0 z-10 flex h-14 items-center border-b px-4 backdrop-blur-sm">
             <p className="text-xl font-bold">Messages</p>
           </div>
-        </div>
-      </header>
-      {socketError && (
-        <p className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
-          {socketError}
-        </p>
-      )}
-      {!activeUser ? (
-        <section className="mx-auto w-full max-w-2xl px-4 py-5">
-          <label className="bg-input flex items-center gap-3 rounded-full px-4 py-3 text-gray-500">
-            <BsSearch />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search someone to message"
-              className="text-primary min-w-0 flex-1 bg-transparent outline-none"
-            />
-          </label>
-          <div className="mt-4 divide-y divide-gray-200">
-            {conversationsLoading && <ConversationRowSkeletonList count={6} />}
-            {incomingNotice && (
-              <button
-                type="button"
-                onClick={() => setIncomingNotice("")}
-                className="w-full cursor-pointer border-b border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm text-blue-700"
-              >
-                {incomingNotice}
-              </button>
-            )}
-            {conversations.map(({ user, latestMessage, unreadCount }) => (
-              <button
-                key={user._id}
-                type="button"
-                onClick={() => openConversation(user)}
-                className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
-              >
-                <UserAvatar user={user} />
-                <span className="min-w-0 flex-1">
-                  <strong className="block">{user.name}</strong>
-                  <span className="block truncate text-sm text-gray-500">
-                    {latestMessage.content}
-                  </span>
-                </span>
-                <span className="flex flex-col items-end gap-1">
-                  <span className="text-xs text-gray-400">
-                    {formatTimeAgo(latestMessage.createdAt)}
-                  </span>
-                  {unreadCount > 0 && (
-                    <span className="bg-accent text-on-accent rounded-full px-1.5 text-[11px] leading-5 font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
-            {users.map((user) => (
-              <button
-                key={user._id}
-                type="button"
-                onClick={() => openConversation(user)}
-                className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
-              >
-                <UserAvatar user={user} />
-                <span>
-                  <strong className="block">{user.name}</strong>
-                  <span className="text-sm text-gray-500">
-                    @{user.username}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-          {!conversationsLoading && !query && !conversations.length && (
-            <p className="mt-16 text-center text-gray-500">
-              Search for a user to start a conversation.
-            </p>
-          )}
-          {!conversationsLoading && query && !users.length && (
-            <p className="mt-8 text-center text-gray-500">No users found.</p>
-          )}
-        </section>
-      ) : (
-        <section className="flex min-h-[calc(100vh-65px)] flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
-          <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
-            <Link href={`/profile/${activeUser.username}`} className="shrink-0">
-              <UserAvatar user={activeUser} />
-            </Link>
-            <Link href={`/profile/${activeUser.username}`} className="hover:underline">
-              <strong className="block">{activeUser.name}</strong>
-              <span className="text-sm text-gray-500">
-                @{activeUser.username}
-              </span>
-            </Link>
-          </div>
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-5"
-          >
-            {loadingOlder && (
-              <p className="text-center text-xs text-gray-400">
-                Loading older messages...
-              </p>
-            )}
-            {loading && <MessageBubbleSkeletonList count={6} />}
-            {!loading && !messages.length && (
-              <p className="m-auto text-center text-gray-500">
-                No messages yet. Say hello.
-              </p>
-            )}
-            {messages.map((message) => {
-              const mine = message.senderId === session.user.id;
-              const isFailed = message.status === "failed";
-              const isPending = message.status === "pending";
-              return (
-                <div
-                  key={message._id}
-                  className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
-                >
-                  <p
-                    onClick={() => isFailed && retryMessage(message)}
-                    className={`${mine ? "bg-accent text-on-accent" : "bg-input text-primary"} max-w-[78%] rounded-2xl px-4 py-2 text-base ${isPending ? "opacity-60" : ""} ${isFailed ? "cursor-pointer border-2 border-red-400 opacity-80" : ""}`}
+        )}
+        {socketError && (
+          <p className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
+            {socketError}
+          </p>
+        )}
+        {!activeUser ? (
+          <section className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-2xl px-4 py-5">
+              <label className="bg-input flex items-center gap-3 rounded-full px-4 py-3 text-gray-500">
+                <BsSearch />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search someone to message"
+                  className="text-primary min-w-0 flex-1 bg-transparent outline-none"
+                />
+              </label>
+              <div className="mt-4 divide-y divide-gray-200">
+                {conversationsLoading && (
+                  <ConversationRowSkeletonList count={6} />
+                )}
+                {incomingNotice && (
+                  <button
+                    type="button"
+                    onClick={() => setIncomingNotice("")}
+                    className="w-full cursor-pointer border-b border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm text-blue-700"
                   >
-                    {message.content}
-                  </p>
-                  {mine && !isFailed && (
-                    <span className="mt-0.5 flex items-center gap-1 px-1 text-xs text-gray-400">
-                      {isPending ? (
-                        "Sending..."
-                      ) : message.read ? (
-                        <BsCheckAll className="text-blue-500" size={14} />
-                      ) : (
-                        <BsCheck size={14} />
+                    {incomingNotice}
+                  </button>
+                )}
+                {conversations.map(({ user, latestMessage, unreadCount }) => (
+                  <button
+                    key={user._id}
+                    type="button"
+                    onClick={() => openConversation(user)}
+                    className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
+                  >
+                    <UserAvatar user={user} />
+                    <span className="min-w-0 flex-1">
+                      <strong className="block">{user.name}</strong>
+                      <span className="block truncate text-sm text-gray-500">
+                        {latestMessage.content}
+                      </span>
+                    </span>
+                    <span className="flex flex-col items-end gap-1">
+                      <span className="text-xs text-gray-400">
+                        {formatTimeAgo(latestMessage.createdAt)}
+                      </span>
+                      {unreadCount > 0 && (
+                        <span className="bg-accent text-on-accent rounded-full px-1.5 text-[11px] leading-5 font-bold">
+                          {unreadCount}
+                        </span>
                       )}
                     </span>
-                  )}
-                  {isFailed && (
-                    <span className="mt-0.5 px-1 text-xs text-red-500">
-                      {message.error || "Failed to send"} · Tap to retry
+                  </button>
+                ))}
+                {users.map((user) => (
+                  <button
+                    key={user._id}
+                    type="button"
+                    onClick={() => openConversation(user)}
+                    className="hover-panel flex w-full cursor-pointer items-center gap-3 px-3 py-4 text-left"
+                  >
+                    <UserAvatar user={user} />
+                    <span>
+                      <strong className="block">{user.name}</strong>
+                      <span className="text-sm text-gray-500">
+                        @{user.username}
+                      </span>
                     </span>
-                  )}
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
-          {error && <p className="px-4 pb-2 text-sm text-red-500">{error}</p>}
-          <form
-            onSubmit={sendMessage}
-            className="flex gap-2 border-t border-gray-200 p-3"
-          >
-            <input
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              maxLength={2000}
-              placeholder="Write a message..."
-              className="bg-input text-primary min-w-0 flex-1 rounded-full px-4 py-3 text-base outline-none"
-            />
-            <button
-              type="submit"
-              disabled={sending || !content.trim()}
-              title="Send message"
-              className="bg-accent text-on-accent flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+                  </button>
+                ))}
+              </div>
+              {!conversationsLoading && !query && !conversations.length && (
+                <p className="mt-16 text-center text-gray-500">
+                  Search for a user to start a conversation.
+                </p>
+              )}
+              {!conversationsLoading && query && !users.length && (
+                <p className="mt-8 text-center text-gray-500">
+                  No users found.
+                </p>
+              )}
+            </div>
+          </section>
+        ) : (
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="bg-panel border-default flex items-center gap-3 border-b px-4 py-3">
+              <button
+                type="button"
+                aria-label="Back to conversations"
+                onClick={() => {
+                  setActiveUser(null);
+                  setMessages([]);
+                  setLoading(false);
+                }}
+                className="hover-accent shrink-0 cursor-pointer rounded-full px-2 text-2xl"
+              >
+                ←
+              </button>
+              <Link
+                href={`/profile/${activeUser.username}`}
+                className="shrink-0"
+              >
+                <UserAvatar user={activeUser} />
+              </Link>
+              <Link
+                href={`/profile/${activeUser.username}`}
+                className="hover:underline"
+              >
+                <strong className="block">{activeUser.name}</strong>
+                <span className="text-sm text-gray-500">
+                  @{activeUser.username}
+                </span>
+              </Link>
+            </div>
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5"
             >
-              <FaPaperPlane />
-            </button>
-          </form>
-        </section>
-      )}
+              {loadingOlder && (
+                <p className="text-center text-xs text-gray-400">
+                  Loading older messages...
+                </p>
+              )}
+              {loading && <MessageBubbleSkeletonList count={6} />}
+              {!loading && !messages.length && (
+                <p className="m-auto text-center text-gray-500">
+                  No messages yet. Say hello.
+                </p>
+              )}
+              {messages.map((message) => {
+                const mine = message.senderId === session.user.id;
+                const isFailed = message.status === "failed";
+                const isPending = message.status === "pending";
+                return (
+                  <div
+                    key={message._id}
+                    className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
+                  >
+                    <p
+                      onClick={() => isFailed && retryMessage(message)}
+                      className={`${mine ? "bg-accent text-on-accent" : "bg-input text-primary"} max-w-[78%] rounded-2xl px-4 py-2 text-base ${isPending ? "opacity-60" : ""} ${isFailed ? "cursor-pointer border-2 border-red-400 opacity-80" : ""}`}
+                    >
+                      {message.content}
+                    </p>
+                    {mine && !isFailed && (
+                      <span className="mt-0.5 flex items-center gap-1 px-1 text-xs text-gray-400">
+                        {isPending ? (
+                          "Sending..."
+                        ) : message.read ? (
+                          <BsCheckAll className="text-blue-500" size={14} />
+                        ) : (
+                          <BsCheck size={14} />
+                        )}
+                      </span>
+                    )}
+                    {isFailed && (
+                      <span className="mt-0.5 px-1 text-xs text-red-500">
+                        {message.error || "Failed to send"} · Tap to retry
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+            {error && <p className="px-4 pb-2 text-sm text-red-500">{error}</p>}
+            <form
+              onSubmit={sendMessage}
+              className="bg-panel border-default flex gap-2 border-t p-3"
+            >
+              <input
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                maxLength={2000}
+                placeholder="Write a message..."
+                className="bg-input text-primary min-w-0 flex-1 rounded-full px-4 py-3 text-base outline-none"
+              />
+              <button
+                type="submit"
+                disabled={sending || !content.trim()}
+                title="Send message"
+                className="bg-accent text-on-accent flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FaPaperPlane />
+              </button>
+            </form>
+          </section>
+        )}
+      </div>
     </div>
   );
 };

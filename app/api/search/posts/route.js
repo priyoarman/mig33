@@ -1,5 +1,6 @@
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
+import User from "@/models/user";
 import { escapeRegExp } from "@/lib/search";
 import { NextResponse } from "next/server";
 
@@ -33,10 +34,25 @@ export async function GET(request) {
         { body: hashtagRegex },
       ],
     })
-      .populate("authorId")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // authorId is stored as a plain string (not a Mongo ref), so look up
+    // authors separately and attach their avatar, same as the main feed.
+    const authorIds = Array.from(new Set(posts.map((post) => String(post.authorId))));
+    const authors = authorIds.length
+      ? await User.find({ _id: { $in: authorIds } })
+          .select("username profileImage")
+          .lean()
+      : [];
+    const authorById = new Map(authors.map((author) => [author._id.toString(), author]));
+
+    const postsWithAuthor = posts.map((post) => ({
+      ...post,
+      authorImage: authorById.get(String(post.authorId))?.profileImage || null,
+    }));
 
     // Get total count for pagination
     const total = await Post.countDocuments({
@@ -47,7 +63,7 @@ export async function GET(request) {
     });
 
     return NextResponse.json({
-      posts,
+      posts: postsWithAuthor,
       pagination: {
         total,
         page,

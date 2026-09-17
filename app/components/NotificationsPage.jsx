@@ -37,17 +37,10 @@ const NotificationsPage = () => {
   }, [clearUnread]);
 
   return (
-    <div className="reddit-main-column sticky z-10 flex w-full flex-col border-r-1 border-gray-200 py-2">
+    <div className="reddit-main-column border-default sticky z-10 flex w-full flex-col border-r-1 py-2">
       <div className="flex min-h-screen flex-col pb-4">
-        <div className="border-default bg-panel bg-opacity-80 sticky top-0 z-10 border-b px-4 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="hover-accent rounded-full px-2 text-2xl">
-              ←
-            </Link>
-            <div className="flex-1">
-              <p className="text-xl font-bold">Notifications</p>
-            </div>
-          </div>
+        <div className="border-default bg-panel bg-opacity-80 sticky top-0 z-10 flex h-14 items-center border-b px-4 backdrop-blur-sm">
+          <p className="text-xl font-bold">Notifications</p>
         </div>
         {notificationsLoading ? (
           <NotificationRowSkeletonList count={8} />
@@ -90,12 +83,12 @@ const NotificationsPage = () => {
                     ) : (
                       <strong>{notification.actor?.name || "Someone"}</strong>
                     )}{" "}
-                    {notification.message}
-                    <time className="mt-1 block text-sm text-gray-500">
-                      {formatTimeAgo(notification.createdAt)}
+                    {notification.message}{" "}
+                    <time className="text-sm text-gray-500">
+                      · {formatTimeAgo(notification.createdAt)}
                     </time>
                     {notification.postSnippet && (
-                      <p className="mt-2 truncate rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-600 dark:bg-neutral-800 dark:text-neutral-300">
+                      <p className="mt-2 truncate rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-neutral-800 dark:text-neutral-300">
                         {notification.postSnippet}
                       </p>
                     )}
