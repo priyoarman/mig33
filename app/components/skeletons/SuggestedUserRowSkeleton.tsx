@@ -15,7 +15,13 @@ function SuggestedUserRow() {
   );
 }
 
-export default function SuggestedUserRowSkeletonList({ count = 3 }) {
+type SuggestedUserRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function SuggestedUserRowSkeletonList({
+  count = 3,
+}: SuggestedUserRowSkeletonListProps) {
   return (
     <div>
       {Array.from({ length: count }).map((_, index) => (

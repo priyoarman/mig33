@@ -1,11 +1,16 @@
-function urlBase64ToUint8Array(base64String) {
+type Platform = "desktop" | "ios" | "android";
+
+// iOS Safari exposes this non-standard flag; the DOM lib doesn't know about it.
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+
+function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
-export function isPushSupported() {
+export function isPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
@@ -14,7 +19,7 @@ export function isPushSupported() {
   );
 }
 
-export function getPlatform() {
+export function getPlatform(): Platform {
   if (typeof window === "undefined") return "desktop";
   const ua = window.navigator.userAgent;
   if (/iphone|ipad|ipod/i.test(ua)) return "ios";
@@ -22,21 +27,21 @@ export function getPlatform() {
   return "desktop";
 }
 
-export function isStandalone() {
+export function isStandalone(): boolean {
   return (
     typeof window !== "undefined" &&
     (window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true)
+      (window.navigator as NavigatorWithStandalone).standalone === true)
   );
 }
 
-export async function getExistingSubscription() {
+export async function getExistingSubscription(): Promise<PushSubscription | null> {
   if (!isPushSupported()) return null;
   const registration = await navigator.serviceWorker.register("/sw.js");
   return registration.pushManager.getSubscription();
 }
 
-export async function subscribeToPush() {
+export async function subscribeToPush(): Promise<boolean> {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!publicKey) return false;
 
@@ -61,7 +66,7 @@ export async function subscribeToPush() {
 // created while the user was logged out, right after installing the PWA)
 // to the currently signed-in account. Safe to call repeatedly: the backend
 // upserts by endpoint, so it just re-stamps the subscription's userId.
-export async function syncExistingSubscription() {
+export async function syncExistingSubscription(): Promise<boolean> {
   const subscription = await getExistingSubscription();
   if (!subscription) return false;
 
@@ -73,7 +78,7 @@ export async function syncExistingSubscription() {
   return true;
 }
 
-export async function unsubscribeFromPush() {
+export async function unsubscribeFromPush(): Promise<void> {
   if (!isPushSupported()) return;
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.getSubscription();

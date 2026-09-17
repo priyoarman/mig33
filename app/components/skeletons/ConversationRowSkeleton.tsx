@@ -13,7 +13,13 @@ function ConversationRow() {
   );
 }
 
-export default function ConversationRowSkeletonList({ count = 6 }) {
+type SkeletonListProps = {
+  count?: number;
+};
+
+export default function ConversationRowSkeletonList({
+  count = 6,
+}: SkeletonListProps) {
   return (
     <div className="divide-y divide-gray-200">
       {Array.from({ length: count }).map((_, index) => (
@@ -23,7 +29,7 @@ export default function ConversationRowSkeletonList({ count = 6 }) {
   );
 }
 
-export function MessageBubbleSkeletonList({ count = 5 }) {
+export function MessageBubbleSkeletonList({ count = 5 }: SkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

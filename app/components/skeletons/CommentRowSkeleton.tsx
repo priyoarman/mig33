@@ -15,7 +15,13 @@ function CommentRow() {
   );
 }
 
-export default function CommentRowSkeletonList({ count = 3 }) {
+type CommentRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function CommentRowSkeletonList({
+  count = 3,
+}: CommentRowSkeletonListProps) {
   return (
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, index) => (
