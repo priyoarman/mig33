@@ -9,6 +9,20 @@ import "@/models/posts";
 import { snippet } from "@/lib/text";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import type { Types } from "mongoose";
+import type { INotification, UserProfile } from "@/types";
+
+// .populate() reshapes these fields at runtime but mongoose's static types
+// don't reflect that, so the lean query result is cast to this shape instead.
+type PopulatedNotification = Omit<INotification, "actorId" | "postId"> & {
+  _id: Types.ObjectId;
+  actorId:
+    | (Pick<UserProfile, "name" | "username" | "profileImage"> & {
+        _id: Types.ObjectId;
+      })
+    | null;
+  postId: { _id: Types.ObjectId; body?: string } | null;
+};
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -23,7 +37,7 @@ export async function GET() {
       .limit(50)
       .populate("actorId", "name username profileImage")
       .populate("postId", "body")
-      .lean(),
+      .lean() as unknown as Promise<PopulatedNotification[]>,
     Notification.countDocuments({
       recipientId: session.user.id,
       read: false,

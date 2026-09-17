@@ -8,16 +8,30 @@ import { MdClose } from "react-icons/md";
 import Link from "next/link";
 import Image from "next/image";
 import SearchUserRowSkeletonList from "./skeletons/SearchUserRowSkeleton";
+import type { PostSummary, UserProfile } from "@/types";
+
+type PostSearchResult = Pick<
+  PostSummary,
+  "_id" | "body" | "authorUsername" | "authorImage"
+>;
+type UserSearchResult = Pick<
+  UserProfile,
+  "_id" | "name" | "username" | "profileImage"
+>;
+type SearchTab = "all" | "posts" | "users";
 
 export default function SearchBar() {
   const { status } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState({ posts: [], users: [] });
+  const [suggestions, setSuggestions] = useState<{
+    posts: PostSearchResult[];
+    users: UserSearchResult[];
+  }>({ posts: [], users: [] });
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState("all"); // all, posts, users
-  const searchRef = useRef(null);
-  const abortRef = useRef(null);
+  const [activeTab, setActiveTab] = useState<SearchTab>("all");
+  const searchRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
   // Debounced search
@@ -35,7 +49,7 @@ export default function SearchBar() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchSuggestions = useCallback(async (query) => {
+  const fetchSuggestions = useCallback(async (query: string) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -50,22 +64,22 @@ export default function SearchBar() {
         }),
       ]);
 
-      const postsData = await postsRes.json();
-      const usersData = await usersRes.json();
+      const postsData = (await postsRes.json()) as { posts?: PostSearchResult[] };
+      const usersData = (await usersRes.json()) as { users?: UserSearchResult[] };
 
       setSuggestions({
         posts: Array.isArray(postsData.posts) ? postsData.posts : [],
         users: Array.isArray(usersData.users) ? usersData.users : [],
       });
     } catch (error) {
-      if (error.name === "AbortError") return;
+      if (error instanceof Error && error.name === "AbortError") return;
       console.error("Search error:", error);
     } finally {
       if (!controller.signal.aborted) setIsSearching(false);
     }
   }, []);
 
-  const handleSearch = async (query) => {
+  const handleSearch = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
@@ -83,8 +97,11 @@ export default function SearchBar() {
     router.push(`/explore?tab=search&q=${encodeURIComponent(trimmed)}`);
   };
 
-  const handleSelectSuggestion = (suggestion, type) => {
-    if (type === "user") {
+  const handleSelectSuggestion = (
+    suggestion: PostSearchResult | UserSearchResult,
+    type: "user" | "post",
+  ) => {
+    if (type === "user" && "username" in suggestion) {
       router.push(`/profile/${suggestion.username}`);
     } else if (type === "post") {
       router.push(`/posts/${suggestion._id}/comments`);
@@ -95,8 +112,8 @@ export default function SearchBar() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
     };
@@ -116,11 +133,11 @@ export default function SearchBar() {
           type="text"
           placeholder="Search for posts, users, hashtags..."
           value={searchQuery}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setSearchQuery(e.target.value);
             setShowDropdown(true);
           }}
-          onKeyPress={(e) => {
+          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === "Enter") {
               handleSearch(searchQuery);
             }
@@ -132,7 +149,7 @@ export default function SearchBar() {
           <button
             onClick={() => {
               setSearchQuery("");
-              setSuggestions([]);
+              setSuggestions({ posts: [], users: [] });
               setShowDropdown(false);
             }}
             className="ml-2 cursor-pointer text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
@@ -203,7 +220,7 @@ export default function SearchBar() {
                             {post.authorImage && (
                               <Image
                                 src={post.authorImage}
-                                alt={post.authorUsername}
+                                alt={post.authorUsername ?? ""}
                                 width={32}
                                 height={32}
                                 className="h-full w-full rounded-full object-cover"
@@ -278,7 +295,7 @@ export default function SearchBar() {
                   onClick={() => handleSearch(searchQuery)}
                   className="w-full cursor-pointer rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
                 >
-                  Search for "{searchQuery}"
+                  Search for &quot;{searchQuery}&quot;
                 </button>
               </div>
             </>

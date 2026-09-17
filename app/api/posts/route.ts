@@ -1,9 +1,10 @@
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import cloudinary from "@/lib/cloudinary";
+import type { UploadApiResponse } from "cloudinary";
 import { getFeedPage, getFollowingIds } from "@/lib/posts";
 import {
   recordNewHashtags,
@@ -11,8 +12,8 @@ import {
   notifyNewMentions,
 } from "@/lib/mentionsAndTags";
 
-const uploadToCloudinary = (file) => {
-  return new Promise((resolve, reject) => {
+const uploadToCloudinary = (file: File) => {
+  return new Promise<UploadApiResponse>((resolve, reject) => {
     file.arrayBuffer().then((buffer) => {
       const stream = cloudinary.uploader.upload_stream(
         {
@@ -21,7 +22,7 @@ const uploadToCloudinary = (file) => {
         },
         (error, result) => {
           if (error) return reject(error);
-          return resolve(result);
+          return resolve(result as UploadApiResponse);
         },
       );
       stream.end(Buffer.from(buffer));
@@ -29,7 +30,7 @@ const uploadToCloudinary = (file) => {
   });
 };
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
@@ -37,7 +38,7 @@ export async function GET(request) {
     const authorId = searchParams.get("authorId");
     const hashtag = searchParams.get("hashtag");
     const following = searchParams.get("following");
-    const limitParam = parseInt(searchParams.get("limit"), 10);
+    const limitParam = parseInt(searchParams.get("limit") ?? "", 10);
 
     // Artificial delay so cursor-based pagination ("load more") is visibly
     // distinguishable from the initial (server-rendered) page in the UI.
@@ -45,7 +46,7 @@ export async function GET(request) {
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
-    let authorIds;
+    let authorIds: string[] | undefined;
     if (following) {
       if (!session?.user?.id) {
         return NextResponse.json({ posts: [], hasMore: false, nextCursor: null });
@@ -72,7 +73,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     await connectMongoDB();
     const session = await getServerSession(authOptions);
@@ -84,9 +85,11 @@ export async function POST(request) {
     }
 
     const data = await request.formData();
-    const body = data.get("body");
+    const rawBody = data.get("body");
+    const body = typeof rawBody === "string" ? rawBody : undefined;
     const file = data.get("image");
-    const gifUrl = data.get("gifUrl");
+    const rawGifUrl = data.get("gifUrl");
+    const gifUrl = typeof rawGifUrl === "string" ? rawGifUrl : undefined;
 
     if (!body && !file && !gifUrl) {
       return NextResponse.json(
@@ -95,10 +98,10 @@ export async function POST(request) {
       );
     }
 
-    let imageUrls = [];
+    const imageUrls: string[] = [];
 
     // Upload image if it exists
-    if (file) {
+    if (file && typeof file !== "string") {
       try {
         const uploadResult = await uploadToCloudinary(file);
         imageUrls.push(uploadResult.secure_url); // Get the secure URL
@@ -117,12 +120,13 @@ export async function POST(request) {
     }
 
     const mentionedUsers = await resolveMentions(body);
+    const authorName = session.user.name || session.user.username;
 
     const post = await Post.create({
       body,
       images: imageUrls,
       authorId: session.user.id,
-      authorName: session.user.name,
+      authorName,
       authorUsername: session.user.username,
       mentions: mentionedUsers.map((user) => user.id),
     });
@@ -132,7 +136,7 @@ export async function POST(request) {
       mentionedUsers,
       authorId: session.user.id,
       actor: {
-        name: session.user.name,
+        name: authorName,
         username: session.user.username,
         profileImage: session.user.image || null,
       },
@@ -144,6 +148,7 @@ export async function POST(request) {
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     console.error("Create post error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

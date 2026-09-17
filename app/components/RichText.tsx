@@ -2,7 +2,17 @@ import Link from "next/link";
 
 const TOKEN_RE = /(#[a-zA-Z0-9_]{1,50}|@[a-zA-Z0-9_]{1,30})/g;
 
-export default function RichText({ text, mentionUsernames = [], className }) {
+type RichTextProps = {
+  text?: string | null;
+  mentionUsernames?: string[];
+  className?: string;
+};
+
+export default function RichText({
+  text,
+  mentionUsernames = [],
+  className,
+}: RichTextProps) {
   if (!text) return null;
 
   const validMentions = new Set(mentionUsernames.map((u) => u.toLowerCase()));

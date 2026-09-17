@@ -1,19 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import cloudinary from "@/lib/cloudinary";
+import type { UploadApiResponse } from "cloudinary";
 
-const uploadToCloudinary = async (file) => {
+const uploadToCloudinary = async (file: File) => {
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  return new Promise((resolve, reject) => {
+  return new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: "redilink_profiles", resource_type: "auto" },
       (error, result) => {
         if (error) return reject(error);
-        resolve(result);
+        resolve(result as UploadApiResponse);
       },
     );
 
@@ -21,7 +22,15 @@ const uploadToCloudinary = async (file) => {
   });
 };
 
-export async function PUT(request) {
+type ProfileUpdate = {
+  name?: string;
+  bio: string;
+  website: string;
+  profileImage?: string;
+  coverImage?: string;
+};
+
+export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -37,7 +46,7 @@ export async function PUT(request) {
     const profileFile = formData.get("profileImage");
     const coverFile = formData.get("coverImage");
 
-    const update = {
+    const update: ProfileUpdate = {
       name: name || undefined,
       bio,
       website,

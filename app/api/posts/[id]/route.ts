@@ -2,15 +2,18 @@ import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import cloudinary from "@/lib/cloudinary";
+import type { UploadApiResponse } from "cloudinary";
 import {
   recordNewHashtags,
   resolveMentions,
   notifyNewMentions,
 } from "@/lib/mentionsAndTags";
 
-export async function GET(request, { params }) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
   await connectMongoDB();
   const { id } = await params;
   const post = await Post.findById(id).lean();
@@ -22,7 +25,7 @@ export async function GET(request, { params }) {
   return NextResponse.json({ post }, { status: 200 });
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
   await connectMongoDB();
   const session = await getServerSession(authOptions);
 
@@ -50,25 +53,25 @@ export async function PUT(request, { params }) {
     const gifUrl = data.get("gifUrl");
     const existingImagesRaw = data.get("existingImages");
 
-    if (newBody !== null) post.body = newBody;
+    if (typeof newBody === "string") post.body = newBody;
 
     let images = post.images || [];
-    if (existingImagesRaw !== null) {
+    if (typeof existingImagesRaw === "string") {
       try {
         const parsed = JSON.parse(existingImagesRaw);
         images = Array.isArray(parsed)
-          ? parsed.filter((url) => typeof url === "string")
+          ? parsed.filter((url): url is string => typeof url === "string")
           : [];
       } catch {
         images = post.images || [];
       }
     }
 
-    if (file && file.size) {
+    if (file && typeof file !== "string" && file.size) {
       // upload to cloudinary
       try {
-        const uploadToCloudinary = (file) => {
-          return new Promise((resolve, reject) => {
+        const uploadToCloudinary = (file: File) => {
+          return new Promise<UploadApiResponse>((resolve, reject) => {
             file.arrayBuffer().then((buffer) => {
               const stream = cloudinary.uploader.upload_stream(
                 {
@@ -77,7 +80,7 @@ export async function PUT(request, { params }) {
                 },
                 (error, result) => {
                   if (error) return reject(error);
-                  return resolve(result);
+                  return resolve(result as UploadApiResponse);
                 }
               );
               stream.end(Buffer.from(buffer));
@@ -91,14 +94,14 @@ export async function PUT(request, { params }) {
         console.error("Cloudinary upload failed:", err);
         return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
       }
-    } else if (gifUrl) {
+    } else if (typeof gifUrl === "string" && gifUrl) {
       images.push(gifUrl);
     }
 
     post.images = images;
   } else {
     // JSON update (no image)
-    const { newBody } = await request.json();
+    const { newBody } = (await request.json()) as { newBody?: string };
     if (newBody !== undefined) post.body = newBody;
   }
 
@@ -115,7 +118,7 @@ export async function PUT(request, { params }) {
       previouslyMentionedIds: previousMentionIds,
       authorId: session.user.id,
       actor: {
-        name: session.user.name,
+        name: session.user.name || session.user.username,
         username: session.user.username,
         profileImage: session.user.image || null,
       },
@@ -130,7 +133,7 @@ export async function PUT(request, { params }) {
   return NextResponse.json({ message: "Post Updated", post }, { status: 200 });
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   await connectMongoDB();
   const session = await getServerSession(authOptions);
 

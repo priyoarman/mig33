@@ -2,8 +2,13 @@
 
 import { FiTrash2 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import type { Id } from "@/types";
 
-const RemoveBtn = ({ id }) => {
+type RemoveBtnProps = {
+  id: Id;
+};
+
+const RemoveBtn = ({ id }: RemoveBtnProps) => {
   const router = useRouter();
 
   const removePost = async () => {

@@ -2,12 +2,15 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import mongoose from "mongoose";
 import { createAndEmitNotification } from "@/lib/realtime";
 import { snippet } from "@/lib/text";
 
-export async function POST(request, { params }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

@@ -5,7 +5,10 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { createAndEmitNotification } from "@/lib/realtime";
 
-export async function POST(request, { params }) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await getServerSession(authOptions);
 

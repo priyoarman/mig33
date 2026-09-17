@@ -4,13 +4,15 @@ import connectMongoDB from "@/lib/mongodb";
 import Message from "@/models/messages";
 import User from "@/models/user";
 import mongoose from "mongoose";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { emitToUser } from "@/lib/realtime";
 import { sendPushNotificationToUser } from "@/lib/webpush";
+import type { IMessage } from "@/types";
+import type { FilterQuery } from "mongoose";
 
 const DEFAULT_PAGE_SIZE = 30;
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
@@ -111,10 +113,10 @@ export async function GET(request) {
     const otherUserObjectId = new mongoose.Types.ObjectId(otherUserId);
     const limit = Math.min(
       100,
-      Math.max(1, parseInt(searchParams.get("limit")) || DEFAULT_PAGE_SIZE),
+      Math.max(1, parseInt(searchParams.get("limit") ?? "") || DEFAULT_PAGE_SIZE),
     );
     const before = searchParams.get("before");
-    const conversationMatch = {
+    const conversationMatch: FilterQuery<IMessage> = {
       $or: [
         { senderId: currentUserObjectId, recipientId: otherUserObjectId },
         { senderId: otherUserObjectId, recipientId: currentUserObjectId },
@@ -155,16 +157,20 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const senderId = session?.user?.id;
-    const { recipientId, content: rawContent, clientId } =
-      await request.json();
+    const { recipientId, content: rawContent, clientId } = (await request.json()) as {
+      recipientId?: string;
+      content?: string;
+      clientId?: string;
+    };
     const content = rawContent?.trim();
 
     if (
       !senderId ||
+      !recipientId ||
       !mongoose.isValidObjectId(recipientId) ||
       !content ||
       content.length > 2000
@@ -221,7 +227,7 @@ export async function POST(request) {
   }
 }
 
-export async function PATCH(request) {
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
@@ -229,7 +235,9 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId: otherUserId } = await request.json();
+    const { userId: otherUserId } = (await request.json()) as {
+      userId?: string;
+    };
     if (!mongoose.isValidObjectId(otherUserId)) {
       return NextResponse.json({ error: "Invalid user" }, { status: 400 });
     }
