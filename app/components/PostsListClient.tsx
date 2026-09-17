@@ -1,7 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import PostCard from "./PostCard";
+import type { FeedPage, PostSummary } from "@/types";
+
+type PostsListClientProps = {
+  initialPosts: PostSummary[];
+  initialHasMore: boolean;
+  initialCursor: string | null;
+  endpoint?: string;
+  emptyState?: ReactNode;
+};
 
 export default function PostsListClient({
   initialPosts,
@@ -9,12 +18,12 @@ export default function PostsListClient({
   initialCursor,
   endpoint = "/api/posts",
   emptyState = null,
-}) {
-  const [posts, setPosts] = useState(initialPosts);
+}: PostsListClientProps) {
+  const [posts, setPosts] = useState<PostSummary[]>(initialPosts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
-  const sentinelRef = useRef(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // router.refresh() re-runs the server component and hands us new
   // initial* props on the same component instance; useState only reads
@@ -35,7 +44,7 @@ export default function PostsListClient({
         `${endpoint}${separator}before=${encodeURIComponent(cursor)}`,
       );
       if (!res.ok) return;
-      const data = await res.json();
+      const data = (await res.json()) as FeedPage;
       setPosts((prev) => [...prev, ...data.posts]);
       setHasMore(data.hasMore);
       setCursor(data.nextCursor);

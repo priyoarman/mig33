@@ -2,13 +2,21 @@
 
 import Link from "next/link";
 import PostsListClient from "./PostsListClient";
+import type { PostSummary } from "@/types";
+
+type HashtagFeedPageProps = {
+  tag: string;
+  initialPosts: PostSummary[];
+  initialHasMore: boolean;
+  initialCursor: string | null;
+};
 
 export default function HashtagFeedPage({
   tag,
   initialPosts,
   initialHasMore,
   initialCursor,
-}) {
+}: HashtagFeedPageProps) {
   return (
     <div className="reddit-main-column bg-panel text-primary flex h-screen w-full overflow-hidden">
       <div className="border-default flex w-full flex-1 flex-col border-r">

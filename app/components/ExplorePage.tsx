@@ -11,29 +11,42 @@ import PostCard from "./PostCard";
 import PostsListClient from "./PostsListClient";
 import PostCardSkeletonList from "./skeletons/PostCardSkeleton";
 import SearchUserRowSkeletonList from "./skeletons/SearchUserRowSkeleton";
+import type { ISearchHistory, PostSummary, UserProfile } from "@/types";
+import type { TrendingHashtag } from "@/lib/hashtags";
 
-const TABS = [
+type TabKey = "search" | "trending" | "following";
+
+const TABS: { key: TabKey; label: string }[] = [
   { key: "search", label: "Search" },
   { key: "trending", label: "Trending" },
   { key: "following", label: "For You" },
 ];
 
-function ExploreSearchTab({ isAuthenticated }) {
+type SearchUserResult = Pick<
+  UserProfile,
+  "_id" | "username" | "name" | "profileImage" | "bio"
+> & {
+  followers?: unknown[];
+};
+
+function ExploreSearchTab({ isAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("q")?.trim() || "";
 
-  const [posts, setPosts] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [posts, setPosts] = useState<PostSummary[]>([]);
+  const [users, setUsers] = useState<SearchUserResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const abortRef = useRef(null);
+  const [searchHistory, setSearchHistory] = useState<ISearchHistory[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadHistory = useCallback(() => {
     if (!isAuthenticated) return;
     fetch("/api/search/history")
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => setSearchHistory(data?.searchHistory || []))
+      .then((data: { searchHistory?: ISearchHistory[] } | null) =>
+        setSearchHistory(data?.searchHistory || []),
+      )
       .catch(() => {});
   }, [isAuthenticated]);
 
@@ -64,12 +77,12 @@ function ExploreSearchTab({ isAuthenticated }) {
             signal: controller.signal,
           }),
         ]);
-        const postsData = await postsRes.json();
-        const usersData = await usersRes.json();
+        const postsData = (await postsRes.json()) as { posts?: PostSummary[] };
+        const usersData = (await usersRes.json()) as { users?: SearchUserResult[] };
         setPosts(Array.isArray(postsData.posts) ? postsData.posts : []);
         setUsers(Array.isArray(usersData.users) ? usersData.users : []);
       } catch (error) {
-        if (error.name === "AbortError") return;
+        if (error instanceof Error && error.name === "AbortError") return;
         console.error("Explore search error:", error);
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -79,7 +92,7 @@ function ExploreSearchTab({ isAuthenticated }) {
     return () => controller.abort();
   }, [query]);
 
-  const goToSearch = (value) => {
+  const goToSearch = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
 
@@ -100,7 +113,7 @@ function ExploreSearchTab({ isAuthenticated }) {
     router.push("/explore?tab=search");
   };
 
-  const removeHistoryItem = async (value, event) => {
+  const removeHistoryItem = async (value: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setSearchHistory((current) => current.filter((item) => item.query !== value));
     try {
@@ -240,7 +253,7 @@ function ExploreSearchTab({ isAuthenticated }) {
   );
 }
 
-function ExploreTrendingTab({ hashtags }) {
+function ExploreTrendingTab({ hashtags }: { hashtags?: TrendingHashtag[] }) {
   if (!hashtags || hashtags.length === 0) {
     return (
       <div className="flex h-96 flex-col items-center justify-center px-4 text-center">
@@ -279,6 +292,11 @@ function ExploreFollowingTab({
   initialPosts,
   initialHasMore,
   initialCursor,
+}: {
+  isAuthenticated: boolean;
+  initialPosts: PostSummary[];
+  initialHasMore: boolean;
+  initialCursor: string | null;
 }) {
   if (!isAuthenticated) {
     return (
@@ -314,22 +332,30 @@ function ExploreFollowingTab({
   );
 }
 
+type ExplorePageProps = {
+  isAuthenticated: boolean;
+  trendingHashtags: TrendingHashtag[];
+  followingPosts: PostSummary[];
+  followingHasMore: boolean;
+  followingCursor: string | null;
+};
+
 export default function ExplorePage({
   isAuthenticated,
   trendingHashtags,
   followingPosts,
   followingHasMore,
   followingCursor,
-}) {
+}: ExplorePageProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(
-    TABS.some((tab) => tab.key === tabFromUrl) ? tabFromUrl : "trending"
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    TABS.some((tab) => tab.key === tabFromUrl) ? (tabFromUrl as TabKey) : "trending",
   );
 
   useEffect(() => {
     if (tabFromUrl && TABS.some((tab) => tab.key === tabFromUrl)) {
-      setActiveTab(tabFromUrl);
+      setActiveTab(tabFromUrl as TabKey);
     }
   }, [tabFromUrl]);
 

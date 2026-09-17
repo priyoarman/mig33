@@ -65,6 +65,7 @@ export interface ProfileStats {
   followersCount?: number;
   followingCount?: number;
   postsCount?: number;
+  joinedAt?: Date | string | null;
 }
 
 export interface FollowResponse {

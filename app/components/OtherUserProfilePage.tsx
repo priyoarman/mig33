@@ -8,6 +8,19 @@ import Link from "next/link";
 import Image from "next/image";
 import ConnectionsModal from "./ConnectionsModal";
 import PostsListClient from "./PostsListClient";
+import type { PostSummary, ProfileStats, UserProfile } from "@/types";
+
+type ConnectionsType = "followers" | "following";
+
+type OtherUserProfilePageProps = {
+  posts: PostSummary[];
+  hasMore?: boolean;
+  nextCursor?: string | null;
+  profileStats?: ProfileStats;
+  profileUser?: Partial<UserProfile>;
+  isFollowing?: boolean;
+  connections?: Partial<Record<ConnectionsType, UserProfile[]>>;
+};
 
 const OtherUserProfilePage = ({
   posts,
@@ -17,14 +30,16 @@ const OtherUserProfilePage = ({
   profileUser = {},
   isFollowing = false,
   connections = {},
-}) => {
+}: OtherUserProfilePageProps) => {
   const { data: session } = useSession();
   const [following, setFollowing] = React.useState(isFollowing);
   const [followersCount, setFollowersCount] = React.useState(
     profileStats.followersCount ?? 0,
   );
   const [pending, setPending] = React.useState(false);
-  const [connectionsType, setConnectionsType] = React.useState(null);
+  const [connectionsType, setConnectionsType] = React.useState<ConnectionsType | null>(
+    null,
+  );
 
   const user = {
     id: profileUser?._id || profileUser?.id || "",
@@ -54,7 +69,11 @@ const OtherUserProfilePage = ({
       const res = await fetch(`/api/users/${user.id}/follow`, {
         method: "POST",
       });
-      const data = await res.json();
+      const data = (await res.json()) as {
+        following?: boolean;
+        followersCount?: number;
+        error?: string;
+      };
 
       if (!res.ok) {
         throw new Error(data?.error || "Unable to update follow status");
