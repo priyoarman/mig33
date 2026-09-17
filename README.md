@@ -57,25 +57,25 @@ The project exists to demonstrate practical full-stack skills: authentication an
 
 ```
                         ┌───────────────────────────┐
-                        │        Browser (PWA)       │
-                        │  React 19 + Tailwind CSS   │
-                        └─────────────┬──────────────┘
+                        │        Browser (PWA)      │
+                        │  React 19 + Tailwind CSS  │
+                        └─────────────┬─────────────┘
                                       │ HTTPS
                  ┌────────────────────┼────────────────────┐
-                 │                    │                     │
-                 ▼                    ▼                     ▼
+                 │                    │                    │
+                 ▼                    ▼                    ▼
         Next.js App Router     Socket.IO client      Service worker
         pages + Route          (chat, live           (Web Push
-        Handlers (app/api/*)    notifications)         notifications)
+        Handlers (app/api/*)   notifications)        notifications)
                  │                    │
                  │        (only connects on localhost, or
-                 │         when NEXT_PUBLIC_SOCKET_URL is set)
+                 │      when NEXT_PUBLIC_SOCKET_URL is set)
                  │                    │
                  ▼                    ▼
-        ┌─────────────────────────────────────┐
+        ┌───────────────────────────────────────┐
         │     server.ts (custom Node server)    │
         │  Next.js request handler + Socket.IO  │
-        └───────────────┬───────────────────────┘
+        └────────────────┬──────────────────────┘
                          │
         ┌────────────────┼────────────────┐
         ▼                ▼                ▼
