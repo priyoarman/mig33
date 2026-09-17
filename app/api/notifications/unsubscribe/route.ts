@@ -2,16 +2,16 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import PushSubscription from "@/models/pushSubscription";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function DELETE(request) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { endpoint } = await request.json();
+    const { endpoint } = (await request.json()) as { endpoint?: string };
     if (typeof endpoint !== "string" || !endpoint) {
       return NextResponse.json(
         { error: "A valid endpoint is required" },

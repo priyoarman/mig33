@@ -1,10 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import Post from "@/models/posts";
 import connectMongoDB from "@/lib/mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import type { Types } from "mongoose";
+import type { IComment } from "@/types";
 
-export async function DELETE(request, { params }) {
+// Every comment subdocument gets an auto _id at save time, but the plain
+// IComment type doesn't declare it.
+type CommentWithId = IComment & { _id: Types.ObjectId };
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; commentId: string }> },
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -20,7 +29,8 @@ export async function DELETE(request, { params }) {
     }
 
     // Find the comment
-    const commentIndex = post.comments.findIndex(
+    const comments = post.comments as unknown as CommentWithId[];
+    const commentIndex = comments.findIndex(
       (c) => c._id.toString() === commentId
     );
     if (commentIndex === -1) {
@@ -42,6 +52,7 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ success: true, commentsCount: post.comments.length });
   } catch (error) {
     console.error("Delete comment error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

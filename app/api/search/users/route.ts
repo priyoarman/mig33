@@ -1,16 +1,19 @@
 import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import { escapeRegExp } from "@/lib/search";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     await connectMongoDB();
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
-    const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit")) || 10));
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "") || 1);
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(searchParams.get("limit") ?? "") || 10),
+    );
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(

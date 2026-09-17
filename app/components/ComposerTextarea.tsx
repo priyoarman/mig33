@@ -2,7 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { getActiveComposerToken } from "@/lib/entities";
+import { getActiveComposerToken, type ComposerToken } from "@/lib/entities";
+import type { UserProfile } from "@/types";
+
+type HashtagSuggestion = {
+  tag: string;
+  count: number;
+};
+
+type Suggestion = HashtagSuggestion | UserProfile;
+
+function suggestionReplacement(item: Suggestion): string {
+  return "tag" in item ? `#${item.tag}` : `@${item.username}`;
+}
+
+type ComposerTextareaProps = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  rows?: number;
+  disabled?: boolean;
+};
 
 export default function ComposerTextarea({
   value,
@@ -11,10 +32,10 @@ export default function ComposerTextarea({
   className,
   rows,
   disabled,
-}) {
-  const textareaRef = useRef(null);
-  const [token, setToken] = useState(null);
-  const [suggestions, setSuggestions] = useState([]);
+}: ComposerTextareaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [token, setToken] = useState<ComposerToken | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -38,7 +59,10 @@ export default function ComposerTextarea({
           setSuggestions([]);
           return;
         }
-        const data = await res.json();
+        const data = (await res.json()) as {
+          hashtags?: HashtagSuggestion[];
+          users?: UserProfile[];
+        };
         setSuggestions(
           token.trigger === "#" ? data.hashtags || [] : data.users || [],
         );
@@ -51,7 +75,7 @@ export default function ComposerTextarea({
     return () => clearTimeout(id);
   }, [token]);
 
-  const insertSuggestion = (replacement, activeToken) => {
+  const insertSuggestion = (replacement: string, activeToken: ComposerToken) => {
     const before = value.slice(0, activeToken.start);
     const after = value.slice(activeToken.end);
     const next = `${before}${replacement} ${after}`;
@@ -68,13 +92,13 @@ export default function ComposerTextarea({
     });
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
-    setToken(getActiveComposerToken(newValue, e.target.selectionStart));
+    setToken(getActiveComposerToken(newValue, e.target.selectionStart ?? newValue.length));
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!token || suggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -87,9 +111,7 @@ export default function ComposerTextarea({
       const selected = suggestions[activeIndex];
       if (!selected) return;
       e.preventDefault();
-      const replacement =
-        token.trigger === "#" ? `#${selected.tag}` : `@${selected.username}`;
-      insertSuggestion(replacement, token);
+      insertSuggestion(suggestionReplacement(selected), token);
     } else if (e.key === "Escape") {
       setToken(null);
       setSuggestions([]);
@@ -114,22 +136,15 @@ export default function ComposerTextarea({
         <div className="border-default bg-panel absolute top-full right-0 left-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-2xl border shadow-lg">
           {suggestions.map((item, index) => (
             <button
-              key={token.trigger === "#" ? item.tag : item._id}
+              key={"tag" in item ? item.tag : item._id ?? item.username}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() =>
-                insertSuggestion(
-                  token.trigger === "#"
-                    ? `#${item.tag}`
-                    : `@${item.username}`,
-                  token,
-                )
-              }
+              onClick={() => insertSuggestion(suggestionReplacement(item), token)}
               className={`hover-panel flex w-full cursor-pointer items-center gap-3 px-4 py-2 text-left text-sm ${
                 index === activeIndex ? "bg-[rgba(15,20,25,0.05)]" : ""
               }`}
             >
-              {token.trigger === "#" ? (
+              {"tag" in item ? (
                 <>
                   <span className="font-semibold text-cyan-600">
                     #{item.tag}

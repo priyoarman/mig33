@@ -2,9 +2,9 @@ import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     await connectMongoDB();
 
@@ -17,7 +17,7 @@ export async function GET(request) {
       .map((id) => id.trim())
       .filter(Boolean);
     const limit = Math.min(
-      Math.max(parseInt(searchParams.get("limit"), 10) || 3, 1),
+      Math.max(parseInt(searchParams.get("limit") ?? "", 10) || 3, 1),
       20,
     );
 

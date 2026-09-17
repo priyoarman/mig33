@@ -2,16 +2,19 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectMongoDB from "@/lib/mongodb";
 import PushSubscription from "@/models/pushSubscription";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { endpoint, keys } = await request.json();
+    const { endpoint, keys } = (await request.json()) as {
+      endpoint?: string;
+      keys?: { p256dh?: string; auth?: string };
+    };
     if (
       typeof endpoint !== "string" ||
       !endpoint ||

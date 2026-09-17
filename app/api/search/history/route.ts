@@ -1,10 +1,20 @@
 import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/user";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
-export async function GET(request) {
+const SEARCH_HISTORY_TYPES = ["post", "user", "all"] as const;
+type SearchHistoryType = (typeof SEARCH_HISTORY_TYPES)[number];
+
+function isSearchHistoryType(value: unknown): value is SearchHistoryType {
+  return (
+    typeof value === "string" &&
+    (SEARCH_HISTORY_TYPES as readonly string[]).includes(value)
+  );
+}
+
+export async function GET() {
   try {
     await connectMongoDB();
     const session = await getServerSession(authOptions);
@@ -37,7 +47,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     await connectMongoDB();
     const session = await getServerSession(authOptions);
@@ -49,10 +59,13 @@ export async function POST(request) {
       );
     }
 
-    const { query, type } = await request.json();
+    const { query, type } = (await request.json()) as {
+      query?: unknown;
+      type?: unknown;
+    };
     const trimmedQuery = typeof query === "string" ? query.trim() : "";
 
-    if (!trimmedQuery || !["post", "user", "all"].includes(type)) {
+    if (!trimmedQuery || !isSearchHistoryType(type)) {
       return NextResponse.json(
         { error: "A valid query and type are required" },
         { status: 400 }
@@ -103,7 +116,7 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE(request: NextRequest) {
   try {
     await connectMongoDB();
     const session = await getServerSession(authOptions);

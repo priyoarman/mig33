@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 export interface ISearchHistory {
   query: string;
-  type?: "post" | "user";
+  type?: "post" | "user" | "all";
   createdAt: Date;
 }
 
@@ -16,9 +16,11 @@ export interface IUser {
   bio?: string;
   location?: string;
   website?: string;
-  following: Types.ObjectId[];
-  followers: Types.ObjectId[];
+  following: Types.Array<Types.ObjectId>;
+  followers: Types.Array<Types.ObjectId>;
   searchHistory: ISearchHistory[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface UserProfile {

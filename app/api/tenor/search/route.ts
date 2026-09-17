@@ -1,6 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(request) {
+type GiphyImageVariant = {
+  url: string;
+};
+
+type GiphyItem = {
+  id: string;
+  images?: {
+    original?: GiphyImageVariant;
+    downsized?: GiphyImageVariant;
+    fixed_height?: GiphyImageVariant;
+    fixed_height_small?: GiphyImageVariant;
+    downsized_medium?: GiphyImageVariant;
+  };
+};
+
+type GifResult = {
+  url: string;
+  preview: string;
+  id: string;
+};
+
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q") || "";
@@ -28,33 +49,33 @@ export async function GET(request) {
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { data?: GiphyItem[] };
 
     const results = (data.data || [])
-      .map((item) => {
+      .map((item): GifResult | null => {
         try {
           const url =
             item.images?.original?.url ||
             item.images?.downsized?.url ||
             item.images?.fixed_height?.url;
 
+          if (!url) return null;
+
           const preview =
             item.images?.fixed_height_small?.url ||
             item.images?.downsized_medium?.url ||
             url;
-
-          if (!url) return null;
 
           return {
             url,
             preview,
             id: item.id,
           };
-        } catch (e) {
+        } catch {
           return null;
         }
       })
-      .filter(Boolean);
+      .filter((result): result is GifResult => result !== null);
 
     return NextResponse.json({ results });
   } catch (err) {

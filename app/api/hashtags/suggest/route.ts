@@ -1,9 +1,9 @@
 import connectMongoDB from "@/lib/mongodb";
 import Hashtag from "@/models/hashtag";
 import { escapeRegExp } from "@/lib/search";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     await connectMongoDB();
 
@@ -11,7 +11,7 @@ export async function GET(request) {
     const query = (searchParams.get("q") || "").trim();
     const limit = Math.min(
       20,
-      Math.max(1, parseInt(searchParams.get("limit")) || 6),
+      Math.max(1, parseInt(searchParams.get("limit") ?? "") || 6),
     );
 
     const filter = query

@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { FaMoon } from "react-icons/fa";
 import { IoMdSunny } from "react-icons/io";
 
+type Theme = "dark" | "light";
+
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState(null);
+  const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("site-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initial = stored || (prefersDark ? "dark" : "light");
+    const initial: Theme =
+      stored === "dark" || stored === "light"
+        ? stored
+        : prefersDark
+          ? "dark"
+          : "light";
     
     setTheme(initial);
     document.documentElement.classList.toggle("theme-dark", initial === "dark");
