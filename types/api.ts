@@ -72,3 +72,13 @@ export interface FollowResponse {
   following: boolean;
   followersCount?: number;
 }
+
+// The shape returned by /api/search/users, as consumed by full search
+// result listings (ExplorePage, the /search page) — distinct from the
+// smaller pick SearchBar's dropdown needs.
+export type SearchUserResult = Pick<
+  UserProfile,
+  "_id" | "username" | "name" | "profileImage" | "bio"
+> & {
+  followers?: unknown[];
+};

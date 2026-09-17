@@ -3,7 +3,11 @@ import PostCommentsModal from "@/app/components/PostCommentsModal";
 import { getPostWithComments } from "../getPost";
 import { notFound } from "next/navigation";
 
-export default async function CommentsPage({ params }) {
+export default async function CommentsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const post = await getPostWithComments(id);
 

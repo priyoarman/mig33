@@ -27,7 +27,16 @@ export default function EditProfilePage() {
 
       try {
         const res = await fetch("/api/profile/me");
-        const data = await res.json();
+        const data = (await res.json()) as {
+          error?: string;
+          user?: {
+            name?: string;
+            bio?: string;
+            website?: string;
+            profileImage?: string;
+            coverImage?: string;
+          };
+        };
 
         if (!res.ok) throw new Error(data?.error || "Failed to load profile");
 
@@ -50,29 +59,34 @@ export default function EditProfilePage() {
     loadProfile();
   }, [session, status]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (event, type) => {
+  const handleImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: "profile" | "cover",
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const result = reader.result;
       if (type === "profile") {
-        setProfilePreview(reader.result);
-        setForm((prev) => ({ ...prev, profileImage: reader.result }));
+        setProfilePreview(result);
+        setForm((prev) => ({ ...prev, profileImage: result }));
       } else {
-        setCoverPreview(reader.result);
-        setForm((prev) => ({ ...prev, coverImage: reader.result }));
+        setCoverPreview(result);
+        setForm((prev) => ({ ...prev, coverImage: result }));
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status !== "authenticated") return;
 
@@ -99,7 +113,7 @@ export default function EditProfilePage() {
         body: payload,
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(data?.error || "Failed to update profile");
 
       router.push("/profile");
@@ -107,7 +121,9 @@ export default function EditProfilePage() {
     } catch (error) {
       console.error("Update profile failed:", error);
       alert(
-        error.message || "Something went wrong while updating the profile.",
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while updating the profile.",
       );
     } finally {
       setLoading(false);

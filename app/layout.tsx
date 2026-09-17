@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import LeftBar from "./components/LeftBar";
 import RightBar from "./components/RightBar";
 import MobileTopBar from "./components/MobileTopBar";
@@ -8,7 +10,7 @@ import { AuthProvider } from "./Providers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "mig33",
   description: "Created by Arman Hossain",
   appleWebApp: {
@@ -21,7 +23,13 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children, modal }) {
+export default function RootLayout({
+  children,
+  modal,
+}: {
+  children: ReactNode;
+  modal: ReactNode;
+}) {
   return (
     <html lang="en">
       <body className="bg-gray-100" suppressHydrationWarning>

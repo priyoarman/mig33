@@ -5,7 +5,11 @@ import HashtagFeedPage from "@/app/components/HashtagFeedPage";
 
 export const dynamic = "force-dynamic";
 
-const HashtagPage = async ({ params }) => {
+const HashtagPage = async ({
+  params,
+}: {
+  params: Promise<{ tag: string }>;
+}) => {
   const { tag: rawTag } = await params;
   const tag = decodeURIComponent(rawTag).toLowerCase();
 
