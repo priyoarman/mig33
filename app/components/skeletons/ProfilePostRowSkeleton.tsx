@@ -32,7 +32,13 @@ function ProfilePostRow() {
   );
 }
 
-export default function ProfilePostRowSkeletonList({ count = 3 }) {
+type ProfilePostRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function ProfilePostRowSkeletonList({
+  count = 3,
+}: ProfilePostRowSkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

@@ -12,7 +12,13 @@ function NotificationRow() {
   );
 }
 
-export default function NotificationRowSkeletonList({ count = 6 }) {
+type NotificationRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function NotificationRowSkeletonList({
+  count = 6,
+}: NotificationRowSkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

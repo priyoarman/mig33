@@ -1,6 +1,10 @@
 import Skeleton from "./Skeleton";
 
-function PostCardSkeleton({ withImage = false }) {
+type PostCardSkeletonProps = {
+  withImage?: boolean;
+};
+
+function PostCardSkeleton({ withImage = false }: PostCardSkeletonProps) {
   return (
     <article className="border-default bg-panel w-full border-b">
       <div className="flex w-full flex-row gap-3 px-3 py-3 sm:gap-3 sm:px-4">
@@ -33,7 +37,15 @@ function PostCardSkeleton({ withImage = false }) {
   );
 }
 
-export default function PostCardSkeletonList({ count = 3, withImage = false }) {
+type PostCardSkeletonListProps = {
+  count?: number;
+  withImage?: boolean;
+};
+
+export default function PostCardSkeletonList({
+  count = 3,
+  withImage = false,
+}: PostCardSkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

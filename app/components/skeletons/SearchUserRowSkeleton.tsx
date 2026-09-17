@@ -12,7 +12,13 @@ function SearchUserRow() {
   );
 }
 
-export default function SearchUserRowSkeletonList({ count = 3 }) {
+type SearchUserRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function SearchUserRowSkeletonList({
+  count = 3,
+}: SearchUserRowSkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

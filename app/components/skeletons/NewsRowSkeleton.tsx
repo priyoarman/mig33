@@ -12,7 +12,13 @@ function NewsRow() {
   );
 }
 
-export default function NewsRowSkeletonList({ count = 3 }) {
+type NewsRowSkeletonListProps = {
+  count?: number;
+};
+
+export default function NewsRowSkeletonList({
+  count = 3,
+}: NewsRowSkeletonListProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
