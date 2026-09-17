@@ -3,16 +3,19 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useRealtimeNotifications } from "./RealtimeProvider";
+import Image from "next/image";
+import { useRealtimeNotifications, type NotificationActor } from "./RealtimeProvider";
 import NotificationRowSkeletonList from "./skeletons/NotificationRowSkeleton";
 import { formatTimeAgo } from "@/lib/date";
 
-function ActorAvatar({ actor }) {
+function ActorAvatar({ actor }: { actor?: NotificationActor }) {
   return actor?.profileImage ? (
     <div className="avatar-square h-10 w-10 shrink-0 overflow-hidden rounded-full">
-      <img
+      <Image
         src={actor.profileImage}
         alt=""
+        width={40}
+        height={40}
         className="h-full w-full rounded-full object-cover"
       />
     </div>
@@ -57,7 +60,8 @@ const NotificationsPage = () => {
               const profileHref = notification.actor?.username
                 ? `/profile/${notification.actor.username}`
                 : null;
-              const stopRowNavigation = (event) => event.stopPropagation();
+              const stopRowNavigation = (event: React.MouseEvent) =>
+                event.stopPropagation();
               const content = (
                 <div className="flex items-start gap-3">
                   {profileHref ? (

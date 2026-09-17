@@ -12,13 +12,13 @@ import { useSession } from "next-auth/react";
 import { io, type Socket } from "socket.io-client";
 import type { INotification } from "@/types";
 
-type NotificationActor = {
+export type NotificationActor = {
   name: string;
   username?: string;
   profileImage?: string | null;
 };
 
-type NotificationItem = {
+export type NotificationItem = {
   id: string;
   type: INotification["type"];
   message: string;

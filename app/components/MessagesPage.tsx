@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { BsSearch, BsCheck, BsCheckAll } from "react-icons/bs";
 import { FaPaperPlane } from "react-icons/fa6";
 import { useRealtimeNotifications } from "./RealtimeProvider";
@@ -13,12 +14,39 @@ import { formatTimeAgo } from "@/lib/date";
 
 const PAGE_SIZE = 30;
 
-function UserAvatar({ user }) {
+type ChatUser = {
+  _id: string;
+  name: string;
+  username: string;
+  profileImage?: string | null;
+};
+
+type ChatMessage = {
+  _id: string;
+  clientId?: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  read: boolean;
+  createdAt: string;
+  status?: "pending" | "failed";
+  error?: string;
+};
+
+type Conversation = {
+  user: ChatUser;
+  unreadCount: number;
+  latestMessage: ChatMessage;
+};
+
+function UserAvatar({ user }: { user?: Pick<ChatUser, "name" | "profileImage"> | null }) {
   return user?.profileImage ? (
     <div className="avatar-square h-10 w-10 overflow-hidden rounded-full">
-      <img
+      <Image
         src={user.profileImage}
         alt=""
+        width={40}
+        height={40}
         className="h-full w-full rounded-full object-cover"
       />
     </div>
@@ -40,7 +68,7 @@ const genClientId = () =>
 // pending optimistic placeholder by clientId once the server confirms it,
 // and otherwise appends. This keeps previously-loaded older pages intact
 // instead of the old behavior of clobbering the whole array on every poll.
-function mergeMessages(incoming, previous) {
+function mergeMessages(incoming: ChatMessage[], previous: ChatMessage[]): ChatMessage[] {
   let next = previous;
   for (const serverMsg of incoming) {
     const byId = next.findIndex((m) => m._id === serverMsg._id);
@@ -57,7 +85,9 @@ function mergeMessages(incoming, previous) {
     }
     next = [...next, serverMsg];
   }
-  return next.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  return next.sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 }
 
 const MessagesPage = () => {
@@ -65,10 +95,10 @@ const MessagesPage = () => {
   const { socket, socketError, markConversationRead } =
     useRealtimeNotifications();
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState([]);
-  const [conversations, setConversations] = useState([]);
-  const [activeUser, setActiveUser] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState<ChatUser[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeUser, setActiveUser] = useState<ChatUser | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [content, setContent] = useState("");
@@ -77,16 +107,18 @@ const MessagesPage = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [incomingNotice, setIncomingNotice] = useState("");
-  const messagesEndRef = useRef(null);
-  const scrollContainerRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const conversationRequestRef = useRef(0);
   const shouldScrollToBottomRef = useRef(true);
-  const prevScrollHeightRef = useRef(null);
+  const prevScrollHeightRef = useRef<number | null>(null);
 
   const loadConversations = () => {
     fetch("/api/messages")
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => setConversations(data?.conversations || []))
+      .then((data: { conversations?: Conversation[] } | null) =>
+        setConversations(data?.conversations || []),
+      )
       .catch(() => {})
       .finally(() => setConversationsLoading(false));
   };
@@ -98,7 +130,7 @@ const MessagesPage = () => {
     return () => clearInterval(timer);
   }, [status]);
 
-  const loadConversation = async (userId) => {
+  const loadConversation = async (userId: string) => {
     const requestId = ++conversationRequestRef.current;
     setLoading(true);
     setError("");
@@ -106,20 +138,25 @@ const MessagesPage = () => {
       const response = await fetch(
         `/api/messages?userId=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}`,
       );
-      const data = await response.json();
+      const data = (await response.json()) as {
+        user?: ChatUser;
+        messages?: ChatMessage[];
+        hasMore?: boolean;
+        error?: string;
+      };
       if (!response.ok)
         throw new Error(data.error || "Unable to load messages");
       // A newer conversation open/switch happened while this was in flight;
       // discard this stale response instead of overwriting the newer state.
       if (requestId !== conversationRequestRef.current) return;
       shouldScrollToBottomRef.current = true;
-      setActiveUser(data.user);
+      setActiveUser(data.user ?? null);
       setMessages(data.messages || []);
       setHasMoreOlder(!!data.hasMore);
       markConversationRead(userId);
     } catch (loadError) {
       if (requestId !== conversationRequestRef.current) return;
-      setError(loadError.message);
+      setError(loadError instanceof Error ? loadError.message : "Unable to load messages");
       setMessages([]);
       setHasMoreOlder(false);
     } finally {
@@ -148,7 +185,10 @@ const MessagesPage = () => {
         `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}&before=${encodeURIComponent(oldest.createdAt)}`,
       );
       if (!response.ok) return;
-      const data = await response.json();
+      const data = (await response.json()) as {
+        messages?: ChatMessage[];
+        hasMore?: boolean;
+      };
       shouldScrollToBottomRef.current = false;
       setMessages((current) => [...(data.messages || []), ...current]);
       setHasMoreOlder(!!data.hasMore);
@@ -194,15 +234,15 @@ const MessagesPage = () => {
         signal: controller.signal,
       })
         .then((response) => response.json())
-        .then((data) =>
+        .then((data: { users?: ChatUser[] }) =>
           setUsers(
             (data.users || []).filter(
               (user) => user._id?.toString() !== session?.user?.id?.toString(),
             ),
           ),
         )
-        .catch((err) => {
-          if (err.name !== "AbortError") setUsers([]);
+        .catch((err: unknown) => {
+          if (!(err instanceof Error) || err.name !== "AbortError") setUsers([]);
         });
     }, 250);
     return () => {
@@ -213,7 +253,7 @@ const MessagesPage = () => {
 
   useEffect(() => {
     if (!socket) return undefined;
-    const receiveMessage = (message) => {
+    const receiveMessage = (message: ChatMessage) => {
       if (
         activeUser &&
         message.senderId === activeUser._id &&
@@ -227,7 +267,7 @@ const MessagesPage = () => {
         loadConversations();
       }
     };
-    const handleReadReceipt = ({ byUserId }) => {
+    const handleReadReceipt = ({ byUserId }: { byUserId: string }) => {
       if (!activeUser || byUserId !== activeUser._id) return;
       setMessages((current) =>
         current.map((m) =>
@@ -252,29 +292,29 @@ const MessagesPage = () => {
         `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}`,
       );
       if (!response.ok) return;
-      const data = await response.json();
+      const data = (await response.json()) as { messages?: ChatMessage[] };
       setMessages((current) => mergeMessages(data.messages || [], current));
     }, 5000);
     return () => clearInterval(timer);
   }, [activeUser, socket, socket?.connected]);
 
-  const openConversation = (user) => {
+  const openConversation = (user: ChatUser) => {
     setIncomingNotice("");
     setQuery("");
     setUsers([]);
     loadConversation(user._id);
   };
 
-  const sendMessage = async (event) => {
+  const sendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const text = content.trim();
-    if (!text || !activeUser || sending) {
+    if (!text || !activeUser || sending || !session?.user?.id) {
       return;
     }
     setSending(true);
     setError("");
     const clientId = genClientId();
-    const optimisticMessage = {
+    const optimisticMessage: ChatMessage = {
       _id: `pending-${clientId}`,
       clientId,
       senderId: session.user.id,
@@ -288,7 +328,7 @@ const MessagesPage = () => {
     setMessages((current) => [...current, optimisticMessage]);
     setContent("");
 
-    const markFailed = (errorMessage) => {
+    const markFailed = (errorMessage: string) => {
       setMessages((current) =>
         current.map((m) =>
           m.clientId === clientId
@@ -299,7 +339,7 @@ const MessagesPage = () => {
       setError(errorMessage);
     };
 
-    const markSent = (realMessage) => {
+    const markSent = (realMessage: ChatMessage) => {
       setMessages((current) => mergeMessages([realMessage], current));
       loadConversations();
     };
@@ -315,13 +355,16 @@ const MessagesPage = () => {
             clientId,
           }),
         });
-        const result = await response.json();
+        const result = (await response.json()) as {
+          message?: ChatMessage;
+          error?: string;
+        };
         if (!response.ok || !result.message) {
           throw new Error(result.error || "Message could not be sent.");
         }
         markSent(result.message);
       } catch (sendError) {
-        markFailed(sendError.message);
+        markFailed(sendError instanceof Error ? sendError.message : "Message could not be sent.");
       } finally {
         setSending(false);
       }
@@ -341,7 +384,7 @@ const MessagesPage = () => {
           `/api/messages?userId=${activeUser._id}&limit=${PAGE_SIZE}`,
         );
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as { messages?: ChatMessage[] };
           const confirmed = (data.messages || []).find(
             (m) => m.clientId === clientId,
           );
@@ -360,7 +403,7 @@ const MessagesPage = () => {
     socket.emit(
       "send_message",
       { recipientId: activeUser._id, content: text, clientId },
-      (result) => {
+      (result?: { message?: ChatMessage; error?: string }) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
@@ -376,7 +419,7 @@ const MessagesPage = () => {
     );
   };
 
-  const retryMessage = (failedMessage) => {
+  const retryMessage = (failedMessage: ChatMessage) => {
     setMessages((current) =>
       current.filter((m) => m.clientId !== failedMessage.clientId),
     );

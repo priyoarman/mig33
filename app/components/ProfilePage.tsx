@@ -9,6 +9,18 @@ import Link from "next/link";
 import Image from "next/image";
 import ConnectionsModal from "./ConnectionsModal";
 import PostsListClient from "./PostsListClient";
+import type { PostSummary, ProfileStats, UserProfile } from "@/types";
+
+type ConnectionsType = "followers" | "following";
+
+type ProfilePageProps = {
+  posts: PostSummary[];
+  hasMore?: boolean;
+  nextCursor?: string | null;
+  profileStats?: ProfileStats;
+  profileUser?: Partial<UserProfile>;
+  connections?: Partial<Record<ConnectionsType, UserProfile[]>>;
+};
 
 const ProfilePage = ({
   posts,
@@ -17,9 +29,11 @@ const ProfilePage = ({
   profileStats = {},
   profileUser = {},
   connections = {},
-}) => {
+}: ProfilePageProps) => {
   const { data: session } = useSession();
-  const [connectionsType, setConnectionsType] = React.useState(null);
+  const [connectionsType, setConnectionsType] = React.useState<ConnectionsType | null>(
+    null,
+  );
 
   const user = {
     name: profileUser?.name || session?.user?.name || "User",
