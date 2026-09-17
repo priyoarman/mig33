@@ -7,13 +7,35 @@ import { HiOutlinePencilAlt } from "react-icons/hi";
 import ComposerTextarea from "./ComposerTextarea";
 import RichText from "./RichText";
 import { formatTimeAgo } from "@/lib/date";
+import type { CommentListItem, Id } from "@/types";
+
+type CommentsSectionProps = {
+  postId: Id;
+  initialComments?: CommentListItem[];
+  onCommentAdded?: (comment: CommentListItem) => void;
+  onCommentDeleted?: (commentId: Id) => void;
+};
+
+// The raw shape of the POST /api/posts/[id]/comments response's
+// `latestComment`, before it's remapped into a CommentListItem below.
+type LatestCommentResponse = {
+  _id: string;
+  user: string;
+  name: string;
+  username: string;
+  email?: string;
+  profileImage?: string | null;
+  body: string;
+  mentionUsernames?: string[];
+  createdAt: string;
+};
 
 export default function CommentsSection({
   postId,
   initialComments = [],
   onCommentAdded,
   onCommentDeleted,
-}) {
+}: CommentsSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState("");
@@ -45,8 +67,8 @@ export default function CommentsSection({
         console.error("Comment API error:", res.status, err);
         return;
       }
-      const data = await res.json();
-      const freshComment = {
+      const data = (await res.json()) as { latestComment: LatestCommentResponse };
+      const freshComment: CommentListItem = {
         id: data.latestComment._id,
         userId: data.latestComment.user,
         name: data.latestComment.name,
@@ -67,7 +89,7 @@ export default function CommentsSection({
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (commentId: Id) => {
     if (!confirm("Are you sure you want to delete this comment?")) return;
 
     try {

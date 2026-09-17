@@ -11,11 +11,11 @@ import GifPickerModal from "./GifPickerModal";
 export default function AddPost() {
   const { data: session, status } = useSession();
   const [body, setBody] = useState("");
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gifModalOpen, setGifModalOpen] = useState(false);
-  const [selectedGifUrl, setSelectedGifUrl] = useState(null);
+  const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null);
   const router = useRouter();
 
   if (status === "loading") return null;
@@ -31,8 +31,8 @@ export default function AddPost() {
     );
   }
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
@@ -47,14 +47,14 @@ export default function AddPost() {
   };
 
   // Select a GIF and set it as preview
-  const selectGif = (gifUrl, previewUrl) => {
+  const selectGif = (gifUrl: string, previewUrl?: string) => {
     setSelectedGifUrl(gifUrl);
     setImagePreview(previewUrl || gifUrl);
     setImage(null); // Clear file upload if GIF is selected
     setGifModalOpen(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!body.trim() && !image && !selectedGifUrl) {
       alert("Write something to be seen!");

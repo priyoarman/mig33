@@ -6,8 +6,20 @@ import Image from "next/image";
 import Link from "next/link";
 import CommentsSection from "./CommentsSection";
 import { formatTimeAgo } from "@/lib/date";
+import type { CommentListItem, PostSummary } from "@/types";
 
-export default function PostCommentsModal({ post }) {
+type PostCommentsModalPost = Pick<
+  PostSummary,
+  "_id" | "authorName" | "authorUsername" | "authorImage" | "body" | "images" | "createdAt"
+> & {
+  comments?: CommentListItem[];
+};
+
+type PostCommentsModalProps = {
+  post: PostCommentsModalPost;
+};
+
+export default function PostCommentsModal({ post }: PostCommentsModalProps) {
   const router = useRouter();
   const close = () => router.back();
 
@@ -17,7 +29,7 @@ export default function PostCommentsModal({ post }) {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") close();
     };
 

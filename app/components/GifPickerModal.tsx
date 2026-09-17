@@ -3,11 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { MdOutlineGifBox } from "react-icons/md";
 
-export default function GifPickerModal({ isOpen, onClose, onSelect }) {
+type GifItem = {
+  id: string;
+  url: string;
+  preview: string;
+};
+
+type GifPickerModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (gifUrl: string, previewUrl?: string) => void;
+};
+
+export default function GifPickerModal({
+  isOpen,
+  onClose,
+  onSelect,
+}: GifPickerModalProps) {
   const [gifSearchQuery, setGifSearchQuery] = useState("");
-  const [gifResults, setGifResults] = useState([]);
+  const [gifResults, setGifResults] = useState<GifItem[]>([]);
   const [isGifSearching, setIsGifSearching] = useState(false);
-  const searchInputRef = useRef(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -27,7 +43,7 @@ export default function GifPickerModal({ isOpen, onClose, onSelect }) {
         const res = await fetch(
           `/api/tenor/search?q=${encodeURIComponent(gifSearchQuery)}&limit=30`
         );
-        const data = await res.json();
+        const data = (await res.json()) as { results?: GifItem[] };
         setGifResults(data.results || []);
       } catch (err) {
         console.error("Giphy search error:", err);
@@ -40,7 +56,7 @@ export default function GifPickerModal({ isOpen, onClose, onSelect }) {
 
   if (!isOpen) return null;
 
-  const handleSelect = (gifUrl, previewUrl) => {
+  const handleSelect = (gifUrl: string, previewUrl: string) => {
     onSelect(gifUrl, previewUrl);
     setGifSearchQuery("");
     setGifResults([]);

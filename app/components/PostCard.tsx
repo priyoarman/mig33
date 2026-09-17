@@ -20,8 +20,13 @@ import {
 } from "react-icons/ai";
 import Image from "next/image";
 import { formatTimeAgo } from "@/lib/date";
+import type { PostSummary } from "@/types";
 
-export default function PostCard({ post }) {
+type PostCardProps = {
+  post: PostSummary;
+};
+
+export default function PostCard({ post }: PostCardProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const isOwner = session?.user?.id === post.authorId;
@@ -37,7 +42,7 @@ export default function PostCard({ post }) {
   const [repostPulse, setRepostPulse] = useState(0);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [body, setBody] = useState(post.body);
-  const [images, setImages] = useState(post.images || []);
+  const [images, setImages] = useState<string[]>(post.images || []);
 
   useEffect(() => {
     setCommentsCount(post.commentsCount ?? post.comments?.length ?? 0);
@@ -72,7 +77,10 @@ export default function PostCard({ post }) {
         method: "POST",
       });
       if (res.ok) {
-        const { liked: newLiked, likesCount: newCount } = await res.json();
+        const { liked: newLiked, likesCount: newCount } = (await res.json()) as {
+          liked: boolean;
+          likesCount: number;
+        };
         setLiked(newLiked);
         setLikesCount(newCount);
       } else {
@@ -106,7 +114,7 @@ export default function PostCard({ post }) {
       });
       if (res.ok) {
         const { reposted: newReposted, repostsCount: newCount } =
-          await res.json();
+          (await res.json()) as { reposted: boolean; repostsCount: number };
         setReposted(newReposted);
         setRepostsCount(newCount);
       } else {

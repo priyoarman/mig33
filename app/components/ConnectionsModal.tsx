@@ -3,15 +3,22 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { UserProfile } from "@/types";
 
-const ConnectionsModal = ({ type, users, onClose }) => {
+type ConnectionsModalProps = {
+  type: "followers" | "following";
+  users: UserProfile[];
+  onClose: () => void;
+};
+
+const ConnectionsModal = ({ type, users, onClose }: ConnectionsModalProps) => {
   useEffect(() => {
     document.body.classList.add("connections-modal-open");
     return () => document.body.classList.remove("connections-modal-open");
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
 
