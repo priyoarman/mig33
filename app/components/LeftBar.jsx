@@ -32,7 +32,7 @@ const LeftBar = () => {
       ),
     },
     {
-      href: "/search",
+      href: "/explore",
       label: "Explore",
       icon: (
         <span className="flex h-8 w-8 shrink-0 items-center justify-center">
@@ -45,7 +45,7 @@ const LeftBar = () => {
       label: "Notifications",
       icon: (
         <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-          <IoNotifications className="text-3xl" />
+          <FaBell className="text-2xl" />
           {unreadCount > 0 && (
             <span className="absolute -top-3 -right-4 rounded-full bg-red-500 px-1.5 text-[11px] leading-5 font-bold text-white">
               +{unreadCount}

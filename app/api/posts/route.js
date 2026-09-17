@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import cloudinary from "@/lib/cloudinary";
-import { getFeedPage } from "@/lib/posts";
+import { getFeedPage, getFollowingIds } from "@/lib/posts";
 import {
   recordNewHashtags,
   resolveMentions,
@@ -35,6 +35,8 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const before = searchParams.get("before");
     const authorId = searchParams.get("authorId");
+    const hashtag = searchParams.get("hashtag");
+    const following = searchParams.get("following");
     const limitParam = parseInt(searchParams.get("limit"), 10);
 
     // Artificial delay so cursor-based pagination ("load more") is visibly
@@ -43,11 +45,21 @@ export async function GET(request) {
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
+    let authorIds;
+    if (following) {
+      if (!session?.user?.id) {
+        return NextResponse.json({ posts: [], hasMore: false, nextCursor: null });
+      }
+      authorIds = await getFollowingIds(session.user.id);
+    }
+
     const { posts, hasMore, nextCursor } = await getFeedPage({
       before,
       limit: Number.isNaN(limitParam) ? undefined : limitParam,
       currentUserId: session?.user?.id,
       authorId: authorId || undefined,
+      authorIds,
+      hashtag: hashtag || undefined,
     });
 
     return NextResponse.json({ posts, hasMore, nextCursor });

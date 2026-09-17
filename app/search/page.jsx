@@ -169,19 +169,21 @@ const SearchResults = () => {
                           href={`/profile/${user.username}`}
                           className="hover-accent border-default flex items-center gap-4 border-b px-4 py-3 transition"
                         >
-                          {user.profileImage ? (
-                            <Image
-                              src={user.profileImage}
-                              alt={user.username}
-                              width={48}
-                              height={48}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-bold text-white">
-                              {user.username.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full">
+                            {user.profileImage ? (
+                              <Image
+                                src={user.profileImage}
+                                alt={user.username}
+                                width={48}
+                                height={48}
+                                className="h-full w-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-bold text-white">
+                                {user.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-bold">{user.name}</p>
                             <p className="text-secondary truncate">

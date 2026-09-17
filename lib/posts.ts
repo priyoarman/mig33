@@ -2,16 +2,25 @@ import mongoose from "mongoose";
 import connectMongoDB from "@/lib/mongodb";
 import Post from "@/models/posts";
 import User from "@/models/user";
+import { escapeRegExp } from "@/lib/search";
 import type { FeedPage, PostSummary } from "@/types/api";
 
 export const DEFAULT_FEED_PAGE_SIZE = 10;
 export const MAX_FEED_PAGE_SIZE = 30;
+
+export async function getFollowingIds(userId: string): Promise<string[]> {
+  await connectMongoDB();
+  const user = await User.findById(userId).select("following").lean();
+  return (user?.following || []).map(String);
+}
 
 interface GetFeedPageOptions {
   before?: string | null;
   limit?: number;
   currentUserId?: string | null;
   authorId?: string | null;
+  authorIds?: string[] | null;
+  hashtag?: string | null;
 }
 
 export async function getFeedPage({
@@ -19,6 +28,8 @@ export async function getFeedPage({
   limit = DEFAULT_FEED_PAGE_SIZE,
   currentUserId,
   authorId,
+  authorIds,
+  hashtag,
 }: GetFeedPageOptions = {}): Promise<FeedPage> {
   await connectMongoDB();
 
@@ -29,6 +40,16 @@ export async function getFeedPage({
     // (a repost shell's `authorId` is the reposter), so a profile page
     // showing "authorId's posts" naturally includes their reposts too.
     query.authorId = authorId;
+  } else if (authorIds) {
+    // Used by "For You"-style feeds restricted to a set of authors (e.g.
+    // people the current user follows). An empty list naturally yields no
+    // results rather than accidentally matching everything.
+    query.authorId = { $in: authorIds };
+  }
+  if (hashtag) {
+    const safeTag = escapeRegExp(hashtag.toLowerCase());
+    // Word-boundary match so "#music" doesn't also match "#musician".
+    query.body = new RegExp(`#${safeTag}(?![a-zA-Z0-9_])`, "i");
   }
   if (before) {
     const beforeDate = new Date(before);
